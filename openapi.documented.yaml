@@ -1,0 +1,5458 @@
+openapi: 3.1.0
+info:
+  title: Nuntly REST API 1.x
+  version: 1.0.0-alpha.1
+  description: Nuntly REST API definition
+  termsOfService: https://nuntly.com/legal/terms-of-service
+  contact:
+    name: Nuntly Support
+    url: https://nuntly.com/docs
+    email: support@nuntly.com
+servers:
+  - description: Nuntly API endpoint
+    url: https://api.nuntly.com
+externalDocs:
+  description: Nuntly API Documentation
+  url: https://nuntly.com/docs
+security:
+  - bearerAuth: []
+tags:
+  - name: API Keys
+    description: Create and revoke API keys used to authenticate requests to the Nuntly API.
+  - name: Agents
+    description: Read and write persistent state for an AI agent, optionally scoped to a specific inbox or thread.
+  - name: Domains
+    description: Add and verify sending and receiving domains. Manage DKIM records, SPF configuration, and enable inbound email routing.
+  - name: Emails
+    description: Send transactional emails, retrieve sending history, and track delivery status per message.
+  - name: Inboxes
+    description: Create email inboxes at a specific address on a verified receiving domain. Assign inboxes to namespaces or AI agents.
+  - name: Messages
+    description: Access received messages, download attachments, and send replies or forwards from an inbox.
+  - name: Namespaces
+    description: Isolate inboxes by tenant, client, or agent using namespaces. Use an external ID to map namespaces to your own data model.
+  - name: Organizations
+    description: Manage your organization profile, team members, and account-level settings.
+  - name: Threads
+    description: Browse email conversations grouped by subject. Mark threads as read or spam, and assign them to an agent.
+  - name: Webhooks
+    description: Register HTTP endpoints to receive real-time delivery events such as bounces, opens, and clicks.
+  - name: Webhooks Events
+    description: Inspect webhook event history and replay failed deliveries for debugging or recovery.
+paths:
+  /emails/stats:
+    get:
+      summary: Retrieve Email Stats
+      description: Returns aggregated daily sending statistics for the current period.
+      operationId: retrieve-email-stats
+      tags:
+        - Emails
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/EmailsStatsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.emails.stats.retrieve();
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.emails().stats().retrieve();
+  /emails/{id}:
+    get:
+      summary: Retrieve Email
+      description: Returns an email with its current delivery status and metadata.
+      operationId: retrieve-email
+      tags:
+        - Emails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the email
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/EmailResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.emails.retrieve('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.emails().retrieve("id_value");
+    delete:
+      summary: Cancel Email
+      description: Cancel a scheduled email before delivery. Only emails with `scheduled` status can be cancelled.
+      operationId: cancel-email
+      tags:
+        - Emails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the email
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DeleteEmailResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.emails.cancel('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.emails().cancel("id_value");
+  /emails/{id}/events:
+    get:
+      summary: Retrieve Email Events
+      description: Returns the full delivery event history for an email (sent, delivered, opened, bounced, etc.).
+      operationId: retrieve-email-events
+      tags:
+        - Emails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/EmailEventsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.emails.events.list('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.emails().events().list("id_value");
+  /emails/{id}/content:
+    get:
+      summary: Retrieve Email Content
+      description: Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a sent email.
+      operationId: retrieve-email-content
+      tags:
+        - Emails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/EmailContentResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.emails.content.retrieve('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.emails().content().retrieve("id_value");
+  /emails:
+    get:
+      summary: List Emails
+      description: Returns sent emails ordered by submission date, newest first.
+      operationId: list-emails
+      tags:
+        - Emails
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EmailsResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.emails.list();
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.emails().list();
+    post:
+      summary: Send Email
+      description: Send transactional emails through Nuntly platform. It supports HTML and plain-text emails, attachments, labels, custom headers and scheduling.
+      operationId: send-email
+      tags:
+        - Emails
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmailRequest"
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CreateEmailResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.emails.send({ /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.emails().send(CreateEmailRequest.builder().build());
+  /domains:
+    get:
+      summary: List Domains
+      description: Returns all domains with their verification and capability status.
+      operationId: list-domains
+      tags:
+        - Domains
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DomainsResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.domains.list();
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.domains().list();
+    post:
+      summary: Create Domain
+      description: Add a domain to start configuring DNS records for sending or receiving emails.
+      operationId: create-domain
+      tags:
+        - Domains
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDomainRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CreateDomainResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.domains.create({ /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.domains().create(CreateDomainRequest.builder().build());
+  /domains/{id}:
+    get:
+      summary: Retrieve Domain
+      description: Returns a domain with its DNS record configuration and current verification status for each record.
+      operationId: retrieve-domain
+      tags:
+        - Domains
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the domain
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DomainRecordsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.domains.retrieve('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.domains().retrieve("id_value");
+    delete:
+      summary: Delete Domain
+      description: Permanently deletes a domain along with its inboxes, received messages, attachments, and sending configuration. This action is irreversible.
+      operationId: delete-domain
+      tags:
+        - Domains
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the domain
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DeleteDomainResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.domains.delete('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.domains().delete("id_value");
+    patch:
+      summary: Update Domain
+      description: Toggle sending, receiving, open tracking, or click tracking capabilities for a domain.
+      operationId: update-domain
+      tags:
+        - Domains
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the domain
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDomainRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/UpdateDomainResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.domains.update('id_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.domains().update("id_value", UpdateDomainRequest.builder().build());
+  /webhooks/events:
+    get:
+      summary: List Webhooks Events
+      description: Returns recent webhook events across all registered endpoints.
+      operationId: list-webhooks-events
+      tags:
+        - Webhooks Events
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WebhookEventsResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.webhooks.events.list();
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.webhooks().events().list();
+  /webhooks/{id}/events/{eventId}/replay:
+    post:
+      summary: Replay Webhook Event
+      description: Re-deliver a webhook event to its endpoint. Useful for retrying failed deliveries.
+      operationId: replay-webhook-event
+      tags:
+        - Webhooks Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Request accepted.
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.webhooks.events.replay('id_value', 'eventId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.webhooks().events().replay("id_value", "eventId_value");
+  /webhooks/{id}/events/{eventId}/deliveries:
+    get:
+      summary: List Webhook Event Deliveries
+      description: Returns all delivery attempts for a webhook event, including HTTP status codes and response times.
+      operationId: list-webhook-event-deliveries
+      tags:
+        - Webhooks Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WebhookEventDeliveriesResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.webhooks.events.deliveries('id_value', 'eventId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.webhooks().events().deliveries("id_value", "eventId_value");
+  /webhooks/{id}:
+    get:
+      summary: Retrieve Webhook
+      description: Returns a webhook endpoint with its URL, subscribed events, and configuration.
+      operationId: retrieve-webhook
+      tags:
+        - Webhooks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the webhook
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WebhookResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.webhooks.retrieve('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.webhooks().retrieve("id_value");
+    put:
+      summary: Update Webhook
+      description: Update the endpoint URL, subscribed event types, or rotate the signing secret.
+      operationId: update-webhook
+      tags:
+        - Webhooks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the webhook
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWebhookRequest"
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/UpdateWebhookResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.webhooks.update('id_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.webhooks().update("id_value", UpdateWebhookRequest.builder().build());
+    delete:
+      summary: Delete Webhook
+      description: Remove a webhook endpoint. No further events will be delivered to this URL.
+      operationId: delete-webhook
+      tags:
+        - Webhooks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the webhook
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DeleteWebhookResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.webhooks.delete('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.webhooks().delete("id_value");
+  /webhooks:
+    post:
+      summary: Create Webhook
+      description: Register an endpoint to start receiving webhook events for your organization.
+      operationId: create-webhook
+      tags:
+        - Webhooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWebhookRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CreateWebhookResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.webhooks.create({ /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.webhooks().create(CreateWebhookRequest.builder().build());
+    get:
+      summary: List Webhooks
+      description: Returns all registered webhook endpoints for the organization.
+      operationId: list-webhooks
+      tags:
+        - Webhooks
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WebhooksResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.webhooks.list();
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.webhooks().list();
+  /organizations/{id}/usage:
+    get:
+      summary: Retrieve Organization Usage
+      description: Returns current period usage metrics (daily and monthly) for sending and receiving, against your plan limits.
+      operationId: retrieve-organization-usage
+      tags:
+        - Organizations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/OrganizationUsageResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.organizations.usage.retrieve('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.organizations().usage().retrieve("id_value");
+  /inboxes:
+    post:
+      summary: Create Inbox
+      description: Create a new inbox on a verified domain.
+      operationId: create-inbox
+      tags:
+        - Inboxes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInboxRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/InboxResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.inboxes.create({ /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.inboxes().create(CreateInboxRequest.builder().build());
+    get:
+      summary: List Inboxes
+      description: List all inboxes.
+      operationId: list-inboxes
+      tags:
+        - Inboxes
+      parameters:
+        - name: cursor
+          in: query
+          description: The cursor to retrieve the next page of results
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximum number of results to return
+          schema:
+            type: number
+        - name: namespaceId
+          in: query
+          description: Filter by namespace.
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/InboxesResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.inboxes.list();
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.inboxes().list();
+  /inboxes/{inboxId}:
+    get:
+      summary: Retrieve Inbox
+      description: Retrieve an inbox with thread stats.
+      operationId: retrieve-inbox
+      tags:
+        - Inboxes
+      parameters:
+        - name: inboxId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/InboxDetailResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.inboxes.retrieve('inboxId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.inboxes().retrieve("inboxId_value");
+    patch:
+      summary: Update Inbox
+      description: Update an inbox.
+      operationId: update-inbox
+      tags:
+        - Inboxes
+      parameters:
+        - name: inboxId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInboxRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.inboxes.update('inboxId_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.inboxes().update("inboxId_value", UpdateInboxRequest.builder().build());
+    delete:
+      summary: Delete Inbox
+      description: Soft-delete an inbox.
+      operationId: delete-inbox
+      tags:
+        - Inboxes
+      parameters:
+        - name: inboxId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.inboxes.delete('inboxId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.inboxes().delete("inboxId_value");
+  /inboxes/{inboxId}/threads:
+    get:
+      summary: List Inbox Threads
+      description: List threads in an inbox.
+      operationId: list-inbox-threads
+      tags:
+        - Threads
+      parameters:
+        - name: inboxId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          description: The cursor to retrieve the next page of results
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximum number of results to return
+          schema:
+            type: number
+        - name: labels
+          in: query
+          description: Comma-separated labels to filter by (AND logic). Threads with spam/trash are excluded by default unless explicitly requested via ?labels=spam or ?labels=trash.
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ThreadsResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.inboxes.threads.list('inboxId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.inboxes().threads().list("inboxId_value");
+  /inboxes/{inboxId}/messages:
+    post:
+      summary: Send Inbox Message
+      description: Send a new message from an inbox.
+      operationId: send-inbox-message
+      tags:
+        - Inboxes
+      parameters:
+        - name: inboxId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SendMessageResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.inboxes.messages.send('inboxId_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.inboxes().messages().send("inboxId_value", SendMessageRequest.builder().build());
+  /agents/{agentId}/memory:
+    get:
+      summary: Retrieve Agent Memory
+      description: Retrieve the memory for an AI agent.
+      operationId: retrieve-agent-memory
+      tags:
+        - Agents
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          description: The agent identifier.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AgentMemory"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.agents.memory.retrieve('agentId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.agents().memory().retrieve("agentId_value");
+    put:
+      summary: Upsert Agent Memory
+      description: Create or update the memory for an AI agent.
+      operationId: upsert-agent-memory
+      tags:
+        - Agents
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          description: The agent identifier.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentMemoryRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AgentMemory"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.agents.memory.upsert('agentId_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.agents().memory().upsert("agentId_value", AgentMemoryRequest.builder().build());
+  /threads/{threadId}:
+    get:
+      summary: Retrieve Thread
+      description: Retrieve a thread. Pass ?markRead=true to automatically remove the unread label from all messages.
+      operationId: retrieve-thread
+      tags:
+        - Threads
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ThreadResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.threads.retrieve('threadId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.threads().retrieve("threadId_value");
+    patch:
+      summary: Update Thread
+      description: Update thread labels and agent assignment. Label operations apply to all messages in the thread.
+      operationId: update-thread
+      tags:
+        - Threads
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateThreadRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.threads.update('threadId_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.threads().update("threadId_value", UpdateThreadRequest.builder().build());
+  /threads/{threadId}/messages:
+    get:
+      summary: List Thread Messages
+      description: List messages in a thread (chronological order).
+      operationId: list-thread-messages
+      tags:
+        - Threads
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ThreadMessagesResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.threads.messages.list('threadId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.threads().messages().list("threadId_value");
+  /messages:
+    get:
+      summary: List Messages
+      description: List all received messages across inboxes.
+      operationId: list-messages
+      tags:
+        - Messages
+      parameters:
+        - name: cursor
+          in: query
+          description: The cursor to retrieve the next page of results
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximum number of results to return
+          schema:
+            type: number
+        - name: domainId
+          in: query
+          description: Filter by domain.
+          schema:
+            type: string
+        - name: from
+          in: query
+          description: Filter by sender address.
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MessagesResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.messages.list();
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.messages().list();
+  /messages/{messageId}:
+    get:
+      summary: Retrieve Message
+      description: Retrieve a single message with inbox enrichment.
+      operationId: retrieve-message
+      tags:
+        - Messages
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: The email Message-ID header.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MessageResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.messages.retrieve('messageId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.messages().retrieve("messageId_value");
+    patch:
+      summary: Update Message
+      description: Update message labels. Only available for messages in user-created inboxes.
+      operationId: update-message
+      tags:
+        - Messages
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMessageRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.messages.update('messageId_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.messages().update("messageId_value", UpdateMessageRequest.builder().build());
+  /messages/{messageId}/content:
+    get:
+      summary: Retrieve Message Content
+      description: Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a received message.
+      operationId: retrieve-message-content
+      tags:
+        - Messages
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/MessageContent"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.messages.content.retrieve('messageId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.messages().content().retrieve("messageId_value");
+  /messages/{messageId}/attachments:
+    get:
+      summary: List Message Attachments
+      description: List all attachments for a message.
+      operationId: list-message-attachments
+      tags:
+        - Messages
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AttachmentsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.messages.attachments.list('messageId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.messages().attachments().list("messageId_value");
+  /messages/{messageId}/attachments/{attachmentId}:
+    get:
+      summary: Retrieve Message Attachment
+      description: Retrieve an attachment with a presigned download URL.
+      operationId: retrieve-message-attachment
+      tags:
+        - Messages
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: attachmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AttachmentResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.messages.attachments.retrieve('messageId_value', 'attachmentId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.messages().attachments().retrieve("messageId_value", "attachmentId_value");
+  /messages/{messageId}/reply:
+    post:
+      summary: Reply To Message
+      description: Reply to a message. Set replyAll to true to reply to all recipients.
+      operationId: reply-to-message
+      tags:
+        - Messages
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: The RFC 5322 Message-ID header.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplyMessageRequest"
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SendMessageResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.messages.reply('messageId_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.messages().reply("messageId_value", ReplyMessageRequest.builder().build());
+  /messages/{messageId}/forward:
+    post:
+      summary: Forward Message
+      description: Forward a message to new recipients.
+      operationId: forward-message
+      tags:
+        - Messages
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: The RFC 5322 Message-ID header.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForwardMessageRequest"
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SendMessageResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.messages.forward('messageId_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.messages().forward("messageId_value", ForwardMessageRequest.builder().build());
+  /namespaces:
+    post:
+      summary: Create Namespace
+      description: Create a new namespace.
+      operationId: create-namespace
+      tags:
+        - Namespaces
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNamespaceRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NamespaceResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.namespaces.create({ /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.namespaces().create(CreateNamespaceRequest.builder().build());
+    get:
+      summary: List Namespaces
+      description: List all namespaces.
+      operationId: list-namespaces
+      tags:
+        - Namespaces
+      parameters:
+        - name: cursor
+          in: query
+          description: The cursor to retrieve the next page of results
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximum number of results to return
+          schema:
+            type: number
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NamespacesResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.namespaces.list();
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.namespaces().list();
+  /namespaces/{namespaceId}:
+    get:
+      summary: Retrieve Namespace
+      description: Retrieve a namespace with inbox stats.
+      operationId: retrieve-namespace
+      tags:
+        - Namespaces
+      parameters:
+        - name: namespaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/NamespaceDetail"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.namespaces.retrieve('namespaceId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.namespaces().retrieve("namespaceId_value");
+    patch:
+      summary: Update Namespace
+      description: Update a namespace.
+      operationId: update-namespace
+      tags:
+        - Namespaces
+      parameters:
+        - name: namespaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNamespaceRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.namespaces.update('namespaceId_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.namespaces().update("namespaceId_value", UpdateNamespaceRequest.builder().build());
+    delete:
+      summary: Delete Namespace
+      description: Soft-delete a namespace. Rejects if it has active inboxes.
+      operationId: delete-namespace
+      tags:
+        - Namespaces
+      parameters:
+        - name: namespaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.namespaces.delete('namespaceId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.namespaces().delete("namespaceId_value");
+  /namespaces/{namespaceId}/inboxes:
+    get:
+      summary: List Namespace Inboxes
+      description: List inboxes in a namespace.
+      operationId: list-namespace-inboxes
+      tags:
+        - Namespaces
+      parameters:
+        - name: namespaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          description: The cursor to retrieve the next page of results
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximum number of results to return
+          schema:
+            type: number
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/InboxesResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.namespaces.inboxes.list('namespaceId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.namespaces().inboxes().list("namespaceId_value");
+  /emails/bulk:
+    post:
+      summary: Send Bulk Emails
+      description: Send up to 100 emails in a single request. Use `fallback` to set default values shared across all messages.
+      operationId: send-bulk-emails
+      tags:
+        - Emails
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBulkEmailsRequest"
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CreateBulkEmailsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.emails.bulk.send({ /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.emails().bulk().send(CreateBulkEmailsRequest.builder().build());
+  /emails/bulk/{bulkId}:
+    get:
+      summary: Retrieve Bulk Emails
+      description: Returns the delivery status of all emails submitted in a bulk request.
+      operationId: retrieve-bulk-emails
+      tags:
+        - Emails
+      parameters:
+        - name: bulkId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/BulkEmailsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.emails.bulk.list('bulkId_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.emails().bulk().list("bulkId_value");
+  /api-keys/{id}:
+    get:
+      summary: Retrieve Api Key
+      description: Returns API key metadata. The key value is never returned after creation.
+      operationId: retrieve-api-key
+      tags:
+        - API Keys
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the api key
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ApiKeyResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.apiKeys.retrieve('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.apiKeys().retrieve("id_value");
+    put:
+      summary: Update Api Key
+      description: Update the key name, permissions, or restrict it to specific sending domains.
+      operationId: update-api-key
+      tags:
+        - API Keys
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the api key
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateApiKeyRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/UpdateApiKeyResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.apiKeys.update('id_value', { /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.apiKeys().update("id_value", UpdateApiKeyRequest.builder().build());
+    delete:
+      summary: Delete Api Key
+      description: Revoke an API key. Requests authenticating with this key will be rejected immediately.
+      operationId: delete-api-key
+      tags:
+        - API Keys
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the api key
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DeleteApiKeyResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.apiKeys.delete('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.apiKeys().delete("id_value");
+  /api-keys:
+    post:
+      summary: Create Api Key
+      description: Generate a new API key. The key value is only returned once — store it securely.
+      operationId: create-api-key
+      tags:
+        - API Keys
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApiKeyRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CreateApiKeyResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.apiKeys.create({ /* ... */ });
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+            import com.nuntly.sdk.models.*;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.apiKeys().create(CreateApiKeyRequest.builder().build());
+    get:
+      summary: List Api Keys
+      description: Returns all API keys for the organization. Key values are never included in list responses.
+      operationId: list-api-keys
+      tags:
+        - API Keys
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApiKeysResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.apiKeys.list();
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.apiKeys().list();
+  /organizations:
+    get:
+      summary: Retrieve Organizations
+      description: Returns all organizations the authenticated user belongs to.
+      operationId: retrieve-organizations
+      tags:
+        - Organizations
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OrganizationsResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.organizations.list();
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.organizations().list();
+  /organizations/{id}:
+    get:
+      summary: Retrieve Organization
+      description: Returns the organization's profile, plan, region, and account status.
+      operationId: retrieve-organization
+      tags:
+        - Organizations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the organization
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/OrganizationResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      x-codeSamples:
+        - lang: JavaScript
+          source: |-
+            import Nuntly from '@nuntly/sdk';
+
+            const client = new Nuntly({
+              apiKey: process.env['NUNTLY_API_KEY'],
+            });
+
+            const response = await client.organizations.retrieve('id_value');
+        - lang: Java
+          source: |-
+            import com.nuntly.sdk.Nuntly;
+            import com.nuntly.sdk.ClientOptions;
+
+            var nuntly = Nuntly.create(ClientOptions.builder()
+                .apiKey(System.getenv("NUNTLY_API_KEY"))
+                .build());
+
+            var response = nuntly.organizations().retrieve("id_value");
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Machine-readable error code
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+      required:
+        - message
+    AgentMemory:
+      type: object
+      required:
+        - id
+        - createdAt
+        - agentId
+        - inboxId
+        - threadId
+        - memory
+        - summary
+      properties:
+        id:
+          description: The agent memory record id.
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        agentId:
+          description: The agent identifier.
+          type: string
+        inboxId:
+          description: The inbox id.
+          type: string
+          nullable: true
+          examples:
+            - ibx_01ka8k8s80gvx9604cn9am5st4
+        threadId:
+          description: The thread id.
+          type: string
+          nullable: true
+        memory:
+          description: The agent memory data.
+          type: object
+          additionalProperties: true
+        summary:
+          description: The conversation summary.
+          type: string
+          nullable: true
+    AgentMemoryRequest:
+      type: object
+      required:
+        - memory
+      properties:
+        inboxId:
+          description: The inbox id to scope the memory to.
+          type: string
+          examples:
+            - ibx_01ka8k8s80gvx9604cn9am5st4
+        threadId:
+          description: The thread id to scope the memory to.
+          type: string
+        memory:
+          description: The agent memory key-value data.
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+        summary:
+          description: A human-readable conversation summary.
+          type: string
+          nullable: true
+    ApiKeyResponse:
+      type: object
+      required:
+        - id
+        - shortToken
+        - status
+        - createdAt
+      properties:
+        id:
+          description: The id of the api key
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the api key
+          type: string
+          examples:
+            - example.com
+        shortToken:
+          description: The last 6 characters of the api key token
+          type: string
+        status:
+          description: The status for the api key
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - revoked
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+    ApiKeysResponseItem:
+      type: object
+      required:
+        - id
+        - shortToken
+        - status
+        - createdAt
+      properties:
+        id:
+          description: The id of the api key
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the api key
+          type: string
+          examples:
+            - example.com
+        shortToken:
+          description: The last 6 characters of the api key token
+          type: string
+        status:
+          description: The status for the api key
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - revoked
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+    AttachmentResponse:
+      type: object
+      required:
+        - id
+        - filename
+        - contentType
+        - size
+        - contentDisposition
+        - contentId
+      properties:
+        id:
+          description: The id of the attachment
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        filename:
+          description: The original filename.
+          type: string
+          nullable: true
+        contentType:
+          description: The MIME content type.
+          type: string
+        size:
+          description: The size in bytes.
+          type: number
+        contentDisposition:
+          description: The content disposition (inline or attachment).
+          type: string
+          nullable: true
+        contentId:
+          description: The CID for inline images.
+          type: string
+          nullable: true
+        downloadUrl:
+          description: Presigned download URL (included when retrieving a single attachment).
+          type: string
+    AttachmentsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/AttachmentResponse"
+    BulkEmailsResponse:
+      type: object
+      required:
+        - id
+        - emails
+      properties:
+        id:
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        emails:
+          type: array
+          items:
+            type: string
+    CreateApiKeyRequest:
+      type: object
+      required:
+        - permission
+      properties:
+        name:
+          description: The name of the api key
+          type: string
+          examples:
+            - example.com
+        status:
+          description: The status for the api key
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - revoked
+        permission:
+          description: The permission type for the api key
+          type: string
+          enum:
+            - fullAccess
+            - sendingAccess
+        domainIds:
+          description: The domain ids to restrict the api key to (only for sendingAccess)
+          type: array
+          items:
+            type: string
+    CreateApiKeyResponse:
+      type: object
+      required:
+        - id
+        - apiKey
+        - shortToken
+        - status
+      properties:
+        id:
+          description: The id of the api key
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the api key
+          type: string
+          examples:
+            - example.com
+        apiKey:
+          description: The content of the api key
+          type: string
+        shortToken:
+          description: The last 6 characters of the api key token
+          type: string
+        status:
+          description: The status for the api key
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - revoked
+    CreateBulkEmailsRequest:
+      type: object
+      required:
+        - emails
+      properties:
+        fallback:
+          description: Used as a fallback field email value if no value is present in emails
+          type: object
+        emails:
+          description: The bulk emails to send
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+    CreateBulkEmailsResponse:
+      type: object
+      required:
+        - emails
+      properties:
+        id:
+          description: The bulk id
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        emails:
+          type: array
+          items:
+            type: string
+    CreateDomainRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: The name of the domain to send e-mails'
+          type: string
+          examples:
+            - example.com
+        sending:
+          description: Enable sending
+          type: boolean
+        receiving:
+          description: Enable receiving
+          type: boolean
+    CreateDomainResponse:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - status
+        - region
+        - statusAt
+        - sending
+        - receiving
+        - sendingStatus
+        - sendingStatusAt
+        - receivingStatus
+        - receivingStatusAt
+        - openTracking
+        - clickTracking
+        - records
+      properties:
+        id:
+          description: The id of the domain
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the domain to send e-mails'
+          type: string
+          examples:
+            - example.com
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        status:
+          description: The status for the domain
+          type: string
+        region:
+          description: The region of the domain data
+          type: string
+        statusAt:
+          description: The date of the lastest verification of this record
+          type: string
+        sending:
+          description: Whether sending is enabled for the domain
+          type: boolean
+        receiving:
+          description: Whether receiving is enabled for the domain
+          type: boolean
+        sendingStatus:
+          description: The sending status for the domain
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - paused
+        sendingStatusAt:
+          description: The date of the latest sending status change
+          type: string
+        receivingStatus:
+          description: The receiving status for the domain
+          type: string
+        receivingStatusAt:
+          description: The date of the latest receiving status change
+          type: string
+        openTracking:
+          description: Emit an event for each recipient opens an email their email client
+          type: boolean
+        clickTracking:
+          description: Emit an event for each time the recipient clicks a link in the email
+          type: boolean
+        records:
+          description: The DNS records for your domain.
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+    CreateEmailRequest:
+      type: object
+      required:
+        - from
+        - to
+        - subject
+      properties:
+        from:
+          description: The e-mail address of the sender
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        to:
+          description: The primary recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - brian67@gmail.com
+        cc:
+          description: The carbon copy recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - carlo43@gmail.com
+        bcc:
+          description: The blind carbon copy recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - archive@company.com
+        replyTo:
+          description: The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - support@company.com
+        subject:
+          description: The subject of the e-mail
+          type: string
+          examples:
+            - Verify your email address
+        text:
+          description: The plaintext version of the email
+          type: string
+          examples:
+            - Thank you for signing up! Please verify your email address.
+        html:
+          description: The HTML version of the email
+          type: string
+          examples:
+            - <h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>
+        headers:
+          description: The headers to add to the email
+          type: object
+          additionalProperties: true
+        tags:
+          description: The tags to add to the email
+          type: array
+          items:
+            type: string
+        attachments:
+          description: The attachements to add to the email
+          type: array
+          items:
+            type: string
+        variables:
+          description: The variables for the template
+          type: object
+          additionalProperties: true
+        scheduledAt:
+          description: The date at which the email is scheduled to be sent
+          type: string
+          examples:
+            - "2026-03-30T09:00:00.000Z"
+    CreateEmailResponse:
+      type: object
+      required:
+        - id
+        - status
+      properties:
+        id:
+          description: The id of the email
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        status:
+          description: The status of the email.
+          type: string
+    CreateInboxRequest:
+      type: object
+      required:
+        - address
+      properties:
+        domainId:
+          description: The id of the domain for this inbox. Defaults to your provided domain when omitted.
+          type: string
+        address:
+          description: The local-part of the email address (before the @).
+          type: string
+        name:
+          description: The display name of the inbox.
+          type: string
+          examples:
+            - example.com
+        namespaceId:
+          description: The id of the namespace to assign the inbox to.
+          type: string
+        agentId:
+          description: The external AI agent identifier.
+          type: string
+    CreateNamespaceRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: The display name of the namespace.
+          type: string
+          examples:
+            - example.com
+        externalId:
+          description: An optional external identifier for the namespace.
+          type: string
+    CreateWebhookRequest:
+      type: object
+      required:
+        - endpointUrl
+        - events
+      properties:
+        name:
+          description: The name of the webhook
+          type: string
+          examples:
+            - example.com
+        endpointUrl:
+          description: The endpoint URL of the webhook
+          type: string
+          examples:
+            - "https://example.com/webhooks"
+        status:
+          description: The status of the webhook.
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - revoked
+        events:
+          description: The event types to subscribe to
+          type: array
+          items:
+            type: string
+    CreateWebhookResponse:
+      type: object
+      required:
+        - id
+        - endpointUrl
+        - status
+        - events
+        - signingSecret
+        - createdAt
+      properties:
+        id:
+          description: The id of the webhook
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the webhook
+          type: string
+          examples:
+            - example.com
+        endpointUrl:
+          description: The endpoint URL of the webhook
+          type: string
+          examples:
+            - "https://example.com/webhooks"
+        status:
+          description: The status of the webhook.
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - revoked
+        events:
+          description: The event types to subscribe to
+          type: array
+          items:
+            type: string
+        signingSecret:
+          description: The signing secret of the webhook.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+    DeleteApiKeyResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: The id of the api key
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+    DeleteDomainResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: The id of the domain
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+    DeleteEmailResponse:
+      type: object
+      required:
+        - id
+        - status
+      properties:
+        id:
+          description: The id of the email
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        status:
+          description: The status of the email.
+          type: string
+    DeleteWebhookResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: The id of the webhook
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+    DomainRecordsResponse:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - status
+        - region
+        - statusAt
+        - sending
+        - receiving
+        - sendingStatus
+        - sendingStatusAt
+        - receivingStatus
+        - receivingStatusAt
+        - openTracking
+        - clickTracking
+        - records
+      properties:
+        id:
+          description: The id of the domain
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the domain to send e-mails'
+          type: string
+          examples:
+            - example.com
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        status:
+          description: The status for the domain
+          type: string
+        region:
+          description: The region of the domain data
+          type: string
+        statusAt:
+          description: The date of the lastest verification of this record
+          type: string
+        sending:
+          description: Whether sending is enabled for the domain
+          type: boolean
+        receiving:
+          description: Whether receiving is enabled for the domain
+          type: boolean
+        sendingStatus:
+          description: The sending status for the domain
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - paused
+        sendingStatusAt:
+          description: The date of the latest sending status change
+          type: string
+        receivingStatus:
+          description: The receiving status for the domain
+          type: string
+        receivingStatusAt:
+          description: The date of the latest receiving status change
+          type: string
+        openTracking:
+          description: Emit an event for each recipient opens an email their email client
+          type: boolean
+        clickTracking:
+          description: Emit an event for each time the recipient clicks a link in the email
+          type: boolean
+        records:
+          description: The DNS records for your domain.
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+    DomainsResponseItem:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - sendingStatus
+        - receivingStatus
+        - createdAt
+        - region
+      properties:
+        id:
+          description: The id of the domain
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the domain to send e-mails'
+          type: string
+          examples:
+            - example.com
+        status:
+          description: The status for the domain
+          type: string
+        sendingStatus:
+          description: The sending status for the domain
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - paused
+        receivingStatus:
+          description: The receiving status for the domain
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        region:
+          description: The region of the domain data
+          type: string
+    EmailContentResponse:
+      type: object
+      required:
+        - html
+        - text
+        - mime
+        - subjectTemplate
+        - htmlTemplate
+        - textTemplate
+      properties:
+        html:
+          description: HTML content, or `null` if unavailable.
+          type: string
+          nullable: true
+          examples:
+            - <h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>
+        text:
+          description: Plain text content, or `null` if unavailable.
+          type: string
+          nullable: true
+          examples:
+            - Thank you for signing up! Please verify your email address.
+        mime:
+          description: Raw MIME (.eml) content, or `null` if unavailable.
+          type: string
+          nullable: true
+        subjectTemplate:
+          description: Subject template content, or `null` if unavailable. Returned for failed emails only.
+          type: string
+          nullable: true
+        htmlTemplate:
+          description: HTML template content, or `null` if unavailable. Returned for failed emails only.
+          type: string
+          nullable: true
+        textTemplate:
+          description: Text template content, or `null` if unavailable. Returned for failed emails only.
+          type: string
+          nullable: true
+    EmailEventsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/EmailEventsResponseItem"
+    EmailEventsResponseItem:
+      type: object
+      required:
+        - id
+        - orgId
+        - emailId
+        - createdAt
+        - eventType
+        - payload
+      properties:
+        id:
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        orgId:
+          description: The id of the organization
+          type: string
+          examples:
+            - org_01ka8k8s80gvx9604cn9am5st4
+        emailId:
+          description: The id of the email
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        occurredAt:
+          description: The date at which the event occurred
+          type: string
+        eventType:
+          description: An event
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+    EmailResponse:
+      type: object
+      required:
+        - id
+        - orgId
+        - from
+        - to
+        - status
+        - subject
+        - createdAt
+      properties:
+        id:
+          description: The id of the email
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        orgId:
+          description: The id of the organization
+          type: string
+          examples:
+            - org_01ka8k8s80gvx9604cn9am5st4
+        messageId:
+          description: The id from email provider
+          type: string
+          examples:
+            - msg_01ka8k8s80gvx9604cn9am5st4
+        bulkId:
+          description: The bulk id
+          type: string
+        from:
+          description: The e-mail address of the sender
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        to:
+          description: The primary recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - brian67@gmail.com
+        cc:
+          description: The carbon copy recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - carlo43@gmail.com
+        bcc:
+          description: The blind carbon copy recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - archive@company.com
+        status:
+          description: The status of the email.
+          type: string
+        statusReason:
+          description: May provide more informations about the status
+          type: object
+          additionalProperties: true
+        subject:
+          description: The subject of the e-mail
+          type: string
+          examples:
+            - Verify your email address
+        replyTo:
+          description: The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - support@company.com
+        headers:
+          description: The headers to add to the email
+          type: object
+          additionalProperties: true
+        tags:
+          description: The tags to add to the email
+          type: array
+          items:
+            type: string
+        attachments:
+          description: The attachements
+          type: array
+          items:
+            type: string
+        variables:
+          description: The variables for the template
+          type: object
+          additionalProperties: true
+        scheduledAt:
+          description: The date at which the email is scheduled to be sent
+          type: string
+          examples:
+            - "2026-03-30T09:00:00.000Z"
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+    EmailsResponseItem:
+      type: object
+      required:
+        - id
+        - from
+        - to
+        - subject
+        - status
+        - createdAt
+      properties:
+        id:
+          description: The id of the email
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        from:
+          description: The e-mail address of the sender
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        to:
+          description: The primary recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - brian67@gmail.com
+        subject:
+          description: The subject of the e-mail
+          type: string
+          examples:
+            - Verify your email address
+        status:
+          description: The status of the email.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        scheduledAt:
+          description: The date at which the email is scheduled to be sent
+          type: string
+          examples:
+            - "2026-03-30T09:00:00.000Z"
+    EmailsStatsResponse:
+      type: object
+      required:
+        - start
+        - end
+        - stats
+      properties:
+        start:
+          description: The start date of the stats range
+          type: string
+        end:
+          description: The end date of the stats range
+          type: string
+        stats:
+          type: array
+          items:
+            type: string
+    ForwardMessageRequest:
+      type: object
+      required:
+        - to
+      properties:
+        to:
+          description: The recipient addresses to forward to.
+          type: array
+          items:
+            type: string
+          examples:
+            - brian67@gmail.com
+        text:
+          description: An optional comment to prepend.
+          type: string
+          examples:
+            - Thank you for signing up! Please verify your email address.
+    IdResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: The id of the resource.
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+    InboxDetailResponse:
+      type: object
+      required:
+        - id
+        - createdAt
+        - domainId
+        - domainName
+        - address
+        - name
+        - namespaceId
+        - namespaceName
+        - agentId
+      properties:
+        id:
+          description: The id of the inbox
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        domainId:
+          description: The id of the domain.
+          type: string
+        domainName:
+          description: The domain name.
+          type: string
+        address:
+          description: The local-part of the email address.
+          type: string
+        name:
+          description: The display name of the inbox.
+          type: string
+          nullable: true
+          examples:
+            - example.com
+        namespaceId:
+          description: The id of the namespace.
+          type: string
+          nullable: true
+        namespaceName:
+          description: The display name of the namespace.
+          type: string
+          nullable: true
+        agentId:
+          description: The AI agent identifier.
+          type: string
+          nullable: true
+    InboxesQuery:
+      type: object
+      properties:
+        cursor:
+          description: The cursor to retrieve the next page of results
+          type: string
+        limit:
+          description: The maximum number of results to return
+          type: number
+        namespaceId:
+          description: Filter by namespace.
+          type: string
+    InboxesResponseItem:
+      type: object
+      required:
+        - id
+        - createdAt
+        - domainId
+        - domainName
+        - address
+        - name
+        - namespaceId
+        - namespaceName
+        - agentId
+      properties:
+        id:
+          description: The id of the inbox
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        domainId:
+          description: The id of the domain.
+          type: string
+        domainName:
+          description: The domain name.
+          type: string
+        address:
+          description: The local-part of the email address.
+          type: string
+        name:
+          description: The display name of the inbox.
+          type: string
+          nullable: true
+          examples:
+            - example.com
+        namespaceId:
+          description: The id of the namespace.
+          type: string
+          nullable: true
+        namespaceName:
+          description: The display name of the namespace.
+          type: string
+          nullable: true
+        agentId:
+          description: The AI agent identifier.
+          type: string
+          nullable: true
+    InboxResponse:
+      type: object
+      required:
+        - id
+        - createdAt
+        - domainId
+        - domainName
+        - address
+        - name
+        - namespaceId
+        - namespaceName
+        - agentId
+      properties:
+        id:
+          description: The id of the inbox
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        domainId:
+          description: The id of the domain.
+          type: string
+        domainName:
+          description: The domain name.
+          type: string
+        address:
+          description: The local-part of the email address.
+          type: string
+        name:
+          description: The display name of the inbox.
+          type: string
+          nullable: true
+          examples:
+            - example.com
+        namespaceId:
+          description: The id of the namespace.
+          type: string
+          nullable: true
+        namespaceName:
+          description: The display name of the namespace.
+          type: string
+          nullable: true
+        agentId:
+          description: The AI agent identifier.
+          type: string
+          nullable: true
+    MessageContent:
+      type: object
+      required:
+        - text
+        - html
+        - mime
+      properties:
+        text:
+          description: Plain text content, or `null` if not requested or unavailable.
+          type: string
+          nullable: true
+          examples:
+            - Thank you for signing up! Please verify your email address.
+        html:
+          description: HTML content, or `null` if not requested or unavailable.
+          type: string
+          nullable: true
+          examples:
+            - <h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>
+        mime:
+          description: Raw MIME (.eml) content, or `null` if not requested or unavailable. Returned for received messages only.
+          type: string
+          nullable: true
+    MessageResponse:
+      type: object
+      required:
+        - id
+        - createdAt
+        - inboxId
+        - threadId
+        - messageId
+        - from
+        - to
+        - cc
+        - bcc
+        - replyTo
+        - subject
+        - receivedAt
+        - status
+        - labels
+        - attachmentCount
+        - headers
+      properties:
+        id:
+          description: The id of the message
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        inboxId:
+          description: The id of the inbox, or null if routed to the default catch-all.
+          type: string
+          nullable: true
+          examples:
+            - ibx_01ka8k8s80gvx9604cn9am5st4
+        threadId:
+          description: The id of the thread.
+          type: string
+        messageId:
+          description: The email Message-ID header.
+          type: string
+          examples:
+            - msg_01ka8k8s80gvx9604cn9am5st4
+        from:
+          description: "The sender address (RFC 5322 format, e.g. \"Jane Doe <jane@example.com>\" or \"jane@example.com\")."
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        to:
+          description: The recipient addresses.
+          type: array
+          items:
+            type: string
+          examples:
+            - brian67@gmail.com
+        cc:
+          description: The CC addresses.
+          type: string
+          nullable: true
+          examples:
+            - carlo43@gmail.com
+        bcc:
+          description: The BCC addresses.
+          type: string
+          nullable: true
+          examples:
+            - archive@company.com
+        replyTo:
+          description: The Reply-To addresses.
+          type: string
+          nullable: true
+          examples:
+            - support@company.com
+        subject:
+          description: The message subject.
+          type: string
+          examples:
+            - Verify your email address
+        receivedAt:
+          description: The original date of the message.
+          type: string
+        status:
+          description: The status of the message
+          type: string
+          enum:
+            - received
+            - sent
+            - discarded
+            - failed
+        labels:
+          description: The message labels.
+          type: array
+          items:
+            type: string
+        attachmentCount:
+          description: The number of attachments.
+          type: number
+        headers:
+          description: The raw email headers.
+          type: string
+          nullable: true
+    MessagesQuery:
+      type: object
+      properties:
+        cursor:
+          description: The cursor to retrieve the next page of results
+          type: string
+        limit:
+          description: The maximum number of results to return
+          type: number
+        domainId:
+          description: Filter by domain.
+          type: string
+        from:
+          description: Filter by sender address.
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+    MessagesResponseItem:
+      type: object
+      required:
+        - id
+        - createdAt
+        - inboxId
+        - threadId
+        - messageId
+        - from
+        - to
+        - cc
+        - bcc
+        - replyTo
+        - subject
+        - receivedAt
+        - status
+        - labels
+        - attachmentCount
+      properties:
+        id:
+          description: The id of the message
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        inboxId:
+          description: The id of the inbox, or null if routed to the default catch-all.
+          type: string
+          nullable: true
+          examples:
+            - ibx_01ka8k8s80gvx9604cn9am5st4
+        threadId:
+          description: The id of the thread.
+          type: string
+        messageId:
+          description: The email Message-ID header.
+          type: string
+          examples:
+            - msg_01ka8k8s80gvx9604cn9am5st4
+        from:
+          description: "The sender address (RFC 5322 format, e.g. \"Jane Doe <jane@example.com>\" or \"jane@example.com\")."
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        to:
+          description: The recipient addresses.
+          type: array
+          items:
+            type: string
+          examples:
+            - brian67@gmail.com
+        cc:
+          description: The CC addresses.
+          type: string
+          nullable: true
+          examples:
+            - carlo43@gmail.com
+        bcc:
+          description: The BCC addresses.
+          type: string
+          nullable: true
+          examples:
+            - archive@company.com
+        replyTo:
+          description: The Reply-To addresses.
+          type: string
+          nullable: true
+          examples:
+            - support@company.com
+        subject:
+          description: The message subject.
+          type: string
+          examples:
+            - Verify your email address
+        receivedAt:
+          description: The original date of the message.
+          type: string
+        status:
+          description: The status of the message
+          type: string
+          enum:
+            - received
+            - sent
+            - discarded
+            - failed
+        labels:
+          description: The message labels.
+          type: array
+          items:
+            type: string
+        attachmentCount:
+          description: The number of attachments.
+          type: number
+    NamespaceDetail:
+      type: object
+      required:
+        - id
+        - createdAt
+        - name
+        - externalId
+        - inboxCount
+        - activeInboxCount
+      properties:
+        id:
+          description: The id of the namespace
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        name:
+          description: The display name of the namespace.
+          type: string
+          examples:
+            - example.com
+        externalId:
+          description: The external identifier for the namespace.
+          type: string
+          nullable: true
+        inboxCount:
+          description: The total number of inboxes in this namespace.
+          type: number
+        activeInboxCount:
+          description: The number of active inboxes in this namespace.
+          type: number
+    NamespaceInboxesQuery:
+      type: object
+      properties:
+        cursor:
+          description: The cursor to retrieve the next page of results
+          type: string
+        limit:
+          description: The maximum number of results to return
+          type: number
+    NamespaceResponse:
+      type: object
+      required:
+        - id
+        - createdAt
+        - name
+        - externalId
+      properties:
+        id:
+          description: The id of the namespace
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        name:
+          description: The display name of the namespace.
+          type: string
+          examples:
+            - example.com
+        externalId:
+          description: The external identifier for the namespace.
+          type: string
+          nullable: true
+    NamespacesQuery:
+      type: object
+      properties:
+        cursor:
+          description: The cursor to retrieve the next page of results
+          type: string
+        limit:
+          description: The maximum number of results to return
+          type: number
+    NamespacesResponseItem:
+      type: object
+      required:
+        - id
+        - createdAt
+        - name
+        - externalId
+      properties:
+        id:
+          description: The id of the namespace
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        name:
+          description: The display name of the namespace.
+          type: string
+          examples:
+            - example.com
+        externalId:
+          description: The external identifier for the namespace.
+          type: string
+          nullable: true
+    OrganizationResponse:
+      type: object
+      required:
+        - id
+        - name
+        - status
+      properties:
+        id:
+          description: The id of the organization
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the organization
+          type: string
+          examples:
+            - example.com
+        status:
+          description: The status of the organization
+          type: string
+          enum:
+            - enabled
+            - disabled
+    OrganizationsResponseItem:
+      type: object
+      required:
+        - id
+        - name
+        - status
+      properties:
+        id:
+          description: The id of the organization
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the organization
+          type: string
+          examples:
+            - example.com
+        status:
+          description: The status of the organization
+          type: string
+          enum:
+            - enabled
+            - disabled
+    OrganizationUsageResponse:
+      type: object
+      required:
+        - transactional
+      properties:
+        transactional:
+          type: object
+    ReplyMessageRequest:
+      type: object
+      required:
+        - replyAll
+      properties:
+        text:
+          description: The plain text body.
+          type: string
+          examples:
+            - Thank you for signing up! Please verify your email address.
+        html:
+          description: The HTML body.
+          type: string
+          examples:
+            - <h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>
+        replyAll:
+          description: Whether to reply to all recipients.
+          type: boolean
+    SendMessageRequest:
+      type: object
+      required:
+        - to
+        - subject
+      properties:
+        to:
+          description: The recipient addresses.
+          type: array
+          items:
+            type: string
+          examples:
+            - brian67@gmail.com
+        cc:
+          description: The CC addresses.
+          type: array
+          items:
+            type: string
+          examples:
+            - carlo43@gmail.com
+        bcc:
+          description: The BCC addresses.
+          type: array
+          items:
+            type: string
+          examples:
+            - archive@company.com
+        subject:
+          description: The message subject.
+          type: string
+          examples:
+            - Verify your email address
+        text:
+          description: The plain text body.
+          type: string
+          examples:
+            - Thank you for signing up! Please verify your email address.
+        html:
+          description: The HTML body.
+          type: string
+          examples:
+            - <h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>
+    SendMessageResponse:
+      type: object
+      required:
+        - id
+        - threadId
+        - messageId
+        - subject
+      properties:
+        id:
+          description: The id of the message
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        threadId:
+          description: The id of the thread.
+          type: string
+        messageId:
+          description: The RFC 5322 Message-ID header.
+          type: string
+          examples:
+            - msg_01ka8k8s80gvx9604cn9am5st4
+        subject:
+          description: The subject of the message.
+          type: string
+          examples:
+            - Verify your email address
+    ThreadMessagesResponseItem:
+      type: object
+      required:
+        - id
+        - createdAt
+        - threadId
+        - messageId
+        - from
+        - to
+        - cc
+        - bcc
+        - replyTo
+        - subject
+        - receivedAt
+        - status
+        - labels
+        - attachmentCount
+      properties:
+        id:
+          description: The id of the message
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        threadId:
+          description: The id of the thread.
+          type: string
+        messageId:
+          description: The email Message-ID header.
+          type: string
+          examples:
+            - msg_01ka8k8s80gvx9604cn9am5st4
+        from:
+          description: "The sender address (RFC 5322 format, e.g. \"Jane Doe <jane@example.com>\" or \"jane@example.com\")."
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        to:
+          description: The recipient addresses.
+          type: array
+          items:
+            type: string
+          examples:
+            - brian67@gmail.com
+        cc:
+          description: The CC addresses.
+          type: string
+          nullable: true
+          examples:
+            - carlo43@gmail.com
+        bcc:
+          description: The BCC addresses.
+          type: string
+          nullable: true
+          examples:
+            - archive@company.com
+        replyTo:
+          description: The Reply-To addresses.
+          type: string
+          nullable: true
+          examples:
+            - support@company.com
+        subject:
+          description: The message subject.
+          type: string
+          examples:
+            - Verify your email address
+        receivedAt:
+          description: The original date of the message.
+          type: string
+        status:
+          description: The status of the message
+          type: string
+          enum:
+            - received
+            - sent
+            - discarded
+            - failed
+        labels:
+          description: The message labels.
+          type: array
+          items:
+            type: string
+        attachmentCount:
+          description: The number of attachments.
+          type: number
+    ThreadResponse:
+      type: object
+      required:
+        - id
+        - createdAt
+        - domainId
+        - domainName
+        - inboxId
+        - subject
+        - lastMessageAt
+        - messageCount
+        - labels
+        - agentId
+      properties:
+        id:
+          description: The id of the thread
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        domainId:
+          description: The id of the domain.
+          type: string
+          nullable: true
+        domainName:
+          description: The domain name.
+          type: string
+        inboxId:
+          description: The id of the inbox.
+          type: string
+          examples:
+            - ibx_01ka8k8s80gvx9604cn9am5st4
+        subject:
+          description: The original subject line.
+          type: string
+          examples:
+            - Verify your email address
+        lastMessageAt:
+          description: The timestamp of the most recent message.
+          type: string
+        messageCount:
+          description: The number of messages in the thread.
+          type: number
+        labels:
+          description: Aggregated labels from all messages in the thread.
+          type: array
+          items:
+            type: string
+        agentId:
+          description: The AI agent identifier.
+          type: string
+          nullable: true
+    ThreadsQuery:
+      type: object
+      properties:
+        cursor:
+          description: The cursor to retrieve the next page of results
+          type: string
+        limit:
+          description: The maximum number of results to return
+          type: number
+        labels:
+          description: Comma-separated labels to filter by (AND logic). Threads with spam/trash are excluded by default unless explicitly requested via ?labels=spam or ?labels=trash.
+          type: string
+    ThreadsResponseItem:
+      type: object
+      required:
+        - id
+        - createdAt
+        - domainId
+        - domainName
+        - inboxId
+        - subject
+        - lastMessageAt
+        - messageCount
+        - labels
+        - agentId
+      properties:
+        id:
+          description: The id of the thread
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        domainId:
+          description: The id of the domain.
+          type: string
+          nullable: true
+        domainName:
+          description: The domain name.
+          type: string
+        inboxId:
+          description: The id of the inbox.
+          type: string
+          examples:
+            - ibx_01ka8k8s80gvx9604cn9am5st4
+        subject:
+          description: The original subject line.
+          type: string
+          examples:
+            - Verify your email address
+        lastMessageAt:
+          description: The timestamp of the most recent message.
+          type: string
+        messageCount:
+          description: The number of messages in the thread.
+          type: number
+        labels:
+          description: Aggregated labels from all messages in the thread.
+          type: array
+          items:
+            type: string
+        agentId:
+          description: The AI agent identifier.
+          type: string
+          nullable: true
+    UpdateApiKeyRequest:
+      type: object
+      required:
+        - permission
+      properties:
+        name:
+          description: The name of the api key
+          type: string
+          examples:
+            - example.com
+        status:
+          type: string
+          enum:
+            - enabled
+            - disabled
+        permission:
+          description: The permission type for the api key
+          type: string
+          enum:
+            - fullAccess
+            - sendingAccess
+        domainIds:
+          description: The domain ids to restrict the api key to (only for sendingAccess)
+          type: array
+          items:
+            type: string
+    UpdateApiKeyResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: The id of the api key
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+    UpdateDomainRequest:
+      type: object
+      properties:
+        openTracking:
+          description: Emit an event for each recipient opens an email their email client
+          type: boolean
+        clickTracking:
+          description: Emit an event for each time the recipient clicks a link in the email
+          type: boolean
+        sending:
+          description: Enable or disable sending
+          type: boolean
+        receiving:
+          description: Enable or disable receiving
+          type: boolean
+    UpdateDomainResponse:
+      type: object
+      required:
+        - id
+        - openTracking
+        - clickTracking
+      properties:
+        id:
+          description: The id of the domain
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        openTracking:
+          description: Emit an event for each recipient opens an email their email client
+          type: boolean
+        clickTracking:
+          description: Emit an event for each time the recipient clicks a link in the email
+          type: boolean
+    UpdateInboxRequest:
+      type: object
+      properties:
+        name:
+          description: The display name of the inbox.
+          type: string
+          nullable: true
+          examples:
+            - example.com
+    UpdateMessageRequest:
+      type: object
+      properties:
+        addLabels:
+          description: Labels to add to the message.
+          type: array
+          items:
+            type: string
+        removeLabels:
+          description: Labels to remove from the message.
+          type: array
+          items:
+            type: string
+    UpdateNamespaceRequest:
+      type: object
+      properties:
+        name:
+          description: The display name of the namespace.
+          type: string
+          examples:
+            - example.com
+        externalId:
+          description: An optional external identifier for the namespace.
+          type: string
+          nullable: true
+    UpdateThreadRequest:
+      type: object
+      properties:
+        addLabels:
+          description: Labels to add to all messages in the thread.
+          type: array
+          items:
+            type: string
+        removeLabels:
+          description: Labels to remove from all messages in the thread.
+          type: array
+          items:
+            type: string
+        agentId:
+          description: The AI agent identifier.
+          type: string
+          nullable: true
+    UpdateWebhookRequest:
+      type: object
+      properties:
+        name:
+          description: The name of the webhook
+          type: string
+          examples:
+            - example.com
+        endpointUrl:
+          description: The endpoint URL of the webhook
+          type: string
+          examples:
+            - "https://example.com/webhooks"
+        events:
+          description: The event types to subscribe to
+          type: array
+          items:
+            type: string
+        status:
+          description: The status of the webhook.
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - revoked
+        rotateSecret:
+          description: If true, a new signing secret will be generated
+          type: boolean
+    UpdateWebhookResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: The id of the webhook
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        signingSecret:
+          description: The signing secret of the webhook.
+          type: string
+    WebhookEventDeliveriesResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/WebhookEventDeliveriesResponseItem"
+    WebhookEventDeliveriesResponseItem:
+      type: object
+      required:
+        - id
+        - deliveredAt
+        - code
+        - status
+        - response
+      properties:
+        id:
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        deliveredAt:
+          type: string
+        code:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - success
+            - failed
+        response:
+          type: object
+          additionalProperties: true
+    WebhookEventsResponseItem:
+      type: object
+      required:
+        - id
+        - webhookId
+        - orgId
+        - event
+        - data
+        - status
+      properties:
+        id:
+          description: The id of the webhook event
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        webhookId:
+          description: The id of the webhook
+          type: string
+          examples:
+            - wh_01ka8k8s80gvx9604cn9am5st4
+        orgId:
+          description: The id of the organization
+          type: string
+          examples:
+            - org_01ka8k8s80gvx9604cn9am5st4
+        event:
+          description: An event
+          type: string
+        successfulAt:
+          description: The timestamp when the event was successfully delivered to the endpoint
+          type: string
+        data:
+          type: object
+          additionalProperties: true
+        status:
+          description: Status of the webhook delivery attempt
+          type: string
+          enum:
+            - success
+            - pending
+            - failed
+    WebhookResponse:
+      type: object
+      required:
+        - id
+        - endpointUrl
+        - events
+        - status
+        - createdAt
+      properties:
+        id:
+          description: The id of the webhook
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the webhook
+          type: string
+          examples:
+            - example.com
+        endpointUrl:
+          description: The endpoint URL of the webhook
+          type: string
+          examples:
+            - "https://example.com/webhooks"
+        events:
+          description: The event types to subscribe to
+          type: array
+          items:
+            type: string
+        status:
+          description: The status of the webhook.
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - revoked
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
+    WebhooksResponseItem:
+      type: object
+      required:
+        - id
+        - endpointUrl
+        - status
+        - events
+        - createdAt
+      properties:
+        id:
+          description: The id of the webhook
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        name:
+          description: The name of the webhook
+          type: string
+          examples:
+            - example.com
+        endpointUrl:
+          description: The endpoint URL of the webhook
+          type: string
+          examples:
+            - "https://example.com/webhooks"
+        status:
+          description: The status of the webhook.
+          type: string
+          enum:
+            - enabled
+            - disabled
+            - revoked
+        events:
+          description: The event types to subscribe to
+          type: array
+          items:
+            type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+          examples:
+            - "2026-03-29T12:00:00.000Z"
