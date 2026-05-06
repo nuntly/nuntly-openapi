@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Publish OpenAPI spec to GitHub Release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify spec files are present
+        run: |
+          test -f openapi.yaml || { echo "::error::openapi.yaml missing"; exit 1; }
+          test -f openapi.documented.yaml || { echo "::error::openapi.documented.yaml missing"; exit 1; }
+
+      - name: Create GitHub Release with spec attachments
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            openapi.yaml \
+            openapi.documented.yaml
