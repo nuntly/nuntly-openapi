@@ -4,7 +4,7 @@
 
 OpenAPI 3.1 specification for the [Nuntly](https://nuntly.com) REST API.
 
-[Documentation](https://nuntly.com/docs) | [API Reference](https://nuntly.com/docs/api) | [Get your API key](https://app.nuntly.com/signup)
+[Documentation](https://nuntly.com/docs) | [API Reference](https://nuntly.com/docs/api) | [Get your API key](https://nuntly.com/auth/sign-up)
 
 ## Files
 

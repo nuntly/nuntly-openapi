@@ -2717,7 +2717,7 @@ paths:
   /emails/bulk:
     post:
       summary: Send Bulk Emails
-      description: Send up to 100 emails in a single request. Use `fallback` to set default values shared across all messages.
+      description: Send up to 20 emails in a single request. Use `fallback` to set default values shared across all messages.
       operationId: send-bulk-emails
       tags:
         - Emails
