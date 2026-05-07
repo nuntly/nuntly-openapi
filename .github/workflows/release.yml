@@ -29,8 +29,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          NOTES_FILE=$(mktemp)
+          cat > "$NOTES_FILE" <<EOF
+          OpenAPI 3.1 specification for the Nuntly REST API \`${VERSION}\`.
+
+          Two files are attached to this release:
+          - \`openapi.yaml\`: machine-friendly spec for code generators and clients
+          - \`openapi.documented.yaml\`: same spec with inline schema descriptions for API references and documentation tooling
+
+          Documentation: https://nuntly.com/docs
+          Get an API key: https://nuntly.com/auth/sign-up
+          EOF
           gh release create "$GITHUB_REF_NAME" \
             --title "$GITHUB_REF_NAME" \
-            --generate-notes \
+            --notes-file "$NOTES_FILE" \
             openapi.yaml \
             openapi.documented.yaml
