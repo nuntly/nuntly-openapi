@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nuntly REST API 1.x
-  version: 1.0.0-alpha.1
+  version: 1.0.0-alpha.11
   description: Nuntly REST API definition
   termsOfService: https://nuntly.com/legal/terms-of-service
   contact:
@@ -40,44 +40,18 @@ tags:
   - name: Webhooks Events
     description: Inspect webhook event history and replay failed deliveries for debugging or recovery.
 paths:
-  /emails/stats:
+  /agents/{agentId}/memory:
     get:
-      summary: Retrieve Email Stats
-      description: Returns aggregated daily sending statistics for the current period.
-      operationId: retrieve-email-stats
+      summary: Retrieve Agent Memory
+      description: Retrieve the memory for an AI agent.
+      operationId: retrieve-agent-memory
       tags:
-        - Emails
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/EmailsStatsResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /emails/{id}:
-    get:
-      summary: Retrieve Email
-      description: Returns an email with its current delivery status and metadata.
-      operationId: retrieve-email
-      tags:
-        - Emails
+        - Agents
       parameters:
-        - name: id
+        - name: agentId
           in: path
           required: true
-          description: The id of the email
+          description: The agent identifier.
           schema:
             type: string
       responses:
@@ -89,7 +63,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/EmailResponse"
+                    $ref: "#/components/schemas/AgentMemory"
                 required:
                   - data
                 additionalProperties: false
@@ -99,49 +73,126 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Upsert Agent Memory
+      description: Create or update the memory for an AI agent.
+      operationId: upsert-agent-memory
+      tags:
+        - Agents
+      parameters:
+        - name: agentId
+          in: path
+          required: true
+          description: The agent identifier.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentMemoryRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/AgentMemory"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api-keys:
+    post:
+      summary: Create Api Key
+      description: Generate a new API key. The key value is only returned once — store it securely.
+      operationId: create-api-key
+      tags:
+        - API Keys
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateApiKeyRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CreateApiKeyResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List Api Keys
+      description: Returns all API keys for the organization. Key values are never included in list responses.
+      operationId: list-api-keys
+      tags:
+        - API Keys
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ApiKeysResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api-keys/{id}:
     delete:
-      summary: Cancel Email
-      description: Cancel a scheduled email before delivery. Only emails with `scheduled` status can be cancelled.
-      operationId: cancel-email
+      summary: Delete Api Key
+      description: Revoke an API key. Requests authenticating with this key will be rejected immediately.
+      operationId: delete-api-key
       tags:
-        - Emails
+        - API Keys
       parameters:
         - name: id
           in: path
           required: true
-          description: The id of the email
-          schema:
-            type: string
-      responses:
-        "202":
-          description: Request accepted.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/DeleteEmailResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /emails/{id}/events:
-    get:
-      summary: Retrieve Email Events
-      description: Returns the full delivery event history for an email (sent, delivered, opened, bounced, etc.).
-      operationId: retrieve-email-events
-      tags:
-        - Emails
-      parameters:
-        - name: id
-          in: path
-          required: true
+          description: The id of the api key
           schema:
             type: string
       responses:
@@ -153,7 +204,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/EmailEventsResponse"
+                    $ref: "#/components/schemas/DeleteApiKeyResponse"
                 required:
                   - data
                 additionalProperties: false
@@ -163,17 +214,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /emails/{id}/content:
     get:
-      summary: Retrieve Email Content
-      description: Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a sent email.
-      operationId: retrieve-email-content
+      summary: Retrieve Api Key
+      description: Returns API key metadata. The key value is never returned after creation.
+      operationId: retrieve-api-key
       tags:
-        - Emails
+        - API Keys
       parameters:
         - name: id
           in: path
           required: true
+          description: The id of the api key
           schema:
             type: string
       responses:
@@ -185,7 +236,217 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/EmailContentResponse"
+                    $ref: "#/components/schemas/ApiKeyResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Update Api Key
+      description: Update the key name, permissions, or restrict it to specific sending domains.
+      operationId: update-api-key
+      tags:
+        - API Keys
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the api key
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateApiKeyRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/UpdateApiKeyResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /domains:
+    post:
+      summary: Create Domain
+      description: Add a domain to start configuring DNS records for sending or receiving emails.
+      operationId: create-domain
+      tags:
+        - Domains
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDomainRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CreateDomainResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List Domains
+      description: Returns all domains with their verification and capability status.
+      operationId: list-domains
+      tags:
+        - Domains
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DomainsResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /domains/{id}:
+    delete:
+      summary: Delete Domain
+      description: Permanently deletes a domain along with its inboxes, received messages, attachments, and sending configuration. This action is irreversible.
+      operationId: delete-domain
+      tags:
+        - Domains
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the domain
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DeleteDomainResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: Retrieve Domain
+      description: Returns a domain with its DNS record configuration and current verification status for each record.
+      operationId: retrieve-domain
+      tags:
+        - Domains
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the domain
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DomainRecordsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update Domain
+      description: Toggle sending, receiving, open tracking, or click tracking capabilities for a domain.
+      operationId: update-domain
+      tags:
+        - Domains
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the domain
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDomainRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/UpdateDomainResponse"
                 required:
                   - data
                 additionalProperties: false
@@ -266,133 +527,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /domains:
-    get:
-      summary: List Domains
-      description: Returns all domains with their verification and capability status.
-      operationId: list-domains
-      tags:
-        - Domains
-      parameters:
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/DomainsResponseItem"
-                  nextCursor:
-                    type: string
-                    nullable: true
-                required:
-                  - data
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    post:
-      summary: Create Domain
-      description: Add a domain to start configuring DNS records for sending or receiving emails.
-      operationId: create-domain
-      tags:
-        - Domains
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateDomainRequest"
-      responses:
-        "201":
-          description: Created.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/CreateDomainResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /domains/{id}:
-    get:
-      summary: Retrieve Domain
-      description: Returns a domain with its DNS record configuration and current verification status for each record.
-      operationId: retrieve-domain
-      tags:
-        - Domains
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the domain
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/DomainRecordsResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+  /emails/{id}:
     delete:
-      summary: Delete Domain
-      description: Permanently deletes a domain along with its inboxes, received messages, attachments, and sending configuration. This action is irreversible.
-      operationId: delete-domain
+      summary: Cancel Email
+      description: Cancel a scheduled email before delivery. Only emails with `scheduled` status can be cancelled.
+      operationId: cancel-email
       tags:
-        - Domains
+        - Emails
       parameters:
         - name: id
           in: path
           required: true
-          description: The id of the domain
+          description: The id of the email
           schema:
             type: string
       responses:
-        "200":
-          description: Successful response.
+        "202":
+          description: Request accepted.
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/DeleteDomainResponse"
+                    $ref: "#/components/schemas/DeleteEmailResponse"
                 required:
                   - data
                 additionalProperties: false
@@ -402,61 +560,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-    patch:
-      summary: Update Domain
-      description: Toggle sending, receiving, open tracking, or click tracking capabilities for a domain.
-      operationId: update-domain
-      tags:
-        - Domains
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the domain
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateDomainRequest"
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/UpdateDomainResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /webhooks/events:
     get:
-      summary: List Webhooks Events
-      description: Returns recent webhook events across all registered endpoints.
-      operationId: list-webhooks-events
+      summary: Retrieve Email
+      description: Returns an email with its current delivery status and metadata.
+      operationId: retrieve-email
       tags:
-        - Webhooks Events
+        - Emails
       parameters:
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
+        - name: id
+          in: path
+          required: true
+          description: The id of the email
           schema:
             type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
       responses:
         "200":
           description: Successful response.
@@ -466,135 +582,92 @@ paths:
                 type: object
                 properties:
                   data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/WebhookEventsResponseItem"
-                  nextCursor:
-                    type: string
-                    nullable: true
+                    $ref: "#/components/schemas/EmailResponse"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /webhooks/{id}/events/{eventId}/replay:
+  /emails/{id}/content:
+    get:
+      summary: Retrieve Email Content
+      description: Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a sent email.
+      operationId: retrieve-email-content
+      tags:
+        - Emails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/EmailContentResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /emails/{id}/events:
+    get:
+      summary: Retrieve Email Events
+      description: Returns the full delivery event history for an email (sent, delivered, opened, bounced, etc.).
+      operationId: retrieve-email-events
+      tags:
+        - Emails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/EmailEventsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /emails/bulk:
     post:
-      summary: Replay Webhook Event
-      description: Re-deliver a webhook event to its endpoint. Useful for retrying failed deliveries.
-      operationId: replay-webhook-event
+      summary: Send Bulk Emails
+      description: Send up to 20 emails in a single request. Use `fallback` to set default values shared across all messages.
+      operationId: send-bulk-emails
       tags:
-        - Webhooks Events
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: eventId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "202":
-          description: Request accepted.
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /webhooks/{id}/events/{eventId}/deliveries:
-    get:
-      summary: List Webhook Event Deliveries
-      description: Returns all delivery attempts for a webhook event, including HTTP status codes and response times.
-      operationId: list-webhook-event-deliveries
-      tags:
-        - Webhooks Events
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: eventId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/WebhookEventDeliveriesResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /webhooks/{id}:
-    get:
-      summary: Retrieve Webhook
-      description: Returns a webhook endpoint with its URL, subscribed events, and configuration.
-      operationId: retrieve-webhook
-      tags:
-        - Webhooks
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the webhook
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/WebhookResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    put:
-      summary: Update Webhook
-      description: Update the endpoint URL, subscribed event types, or rotate the signing secret.
-      operationId: update-webhook
-      tags:
-        - Webhooks
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the webhook
-          schema:
-            type: string
+        - Emails
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateWebhookRequest"
+              $ref: "#/components/schemas/CreateBulkEmailsRequest"
       responses:
         "202":
           description: Request accepted.
@@ -604,7 +677,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/UpdateWebhookResponse"
+                    $ref: "#/components/schemas/CreateBulkEmailsResponse"
                 required:
                   - data
                 additionalProperties: false
@@ -614,118 +687,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-    delete:
-      summary: Delete Webhook
-      description: Remove a webhook endpoint. No further events will be delivered to this URL.
-      operationId: delete-webhook
-      tags:
-        - Webhooks
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the webhook
-          schema:
-            type: string
-      responses:
-        "202":
-          description: Request accepted.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/DeleteWebhookResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /webhooks:
-    post:
-      summary: Create Webhook
-      description: Register an endpoint to start receiving webhook events for your organization.
-      operationId: create-webhook
-      tags:
-        - Webhooks
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateWebhookRequest"
-      responses:
-        "201":
-          description: Created.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/CreateWebhookResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+  /emails/bulk/{bulkId}:
     get:
-      summary: List Webhooks
-      description: Returns all registered webhook endpoints for the organization.
-      operationId: list-webhooks
+      summary: Retrieve Bulk Emails
+      description: Returns the delivery status of all emails submitted in a bulk request.
+      operationId: retrieve-bulk-emails
       tags:
-        - Webhooks
+        - Emails
       parameters:
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/WebhooksResponseItem"
-                  nextCursor:
-                    type: string
-                    nullable: true
-                required:
-                  - data
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /organizations/{id}/usage:
-    get:
-      summary: Retrieve Organization Usage
-      description: Returns current period usage metrics (daily and monthly) for sending and receiving, against your plan limits.
-      operationId: retrieve-organization-usage
-      tags:
-        - Organizations
-      parameters:
-        - name: id
+        - name: bulkId
           in: path
           required: true
           schema:
@@ -739,7 +709,33 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/OrganizationUsageResponse"
+                    $ref: "#/components/schemas/BulkEmailsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /emails/stats:
+    get:
+      summary: Retrieve Email Stats
+      description: Returns aggregated daily sending statistics for the current period.
+      operationId: retrieve-email-stats
+      tags:
+        - Emails
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/EmailsStatsResponse"
                 required:
                   - data
                 additionalProperties: false
@@ -836,6 +832,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
   /inboxes/{inboxId}:
+    delete:
+      summary: Delete Inbox
+      description: Soft-delete an inbox.
+      operationId: delete-inbox
+      tags:
+        - Inboxes
+      parameters:
+        - name: inboxId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: Retrieve Inbox
       description: Retrieve an inbox with thread stats.
@@ -903,10 +930,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-    delete:
-      summary: Delete Inbox
-      description: Soft-delete an inbox.
-      operationId: delete-inbox
+  /inboxes/{inboxId}/messages:
+    post:
+      summary: Send Inbox Message
+      description: Send a new message from an inbox.
+      operationId: send-inbox-message
       tags:
         - Inboxes
       parameters:
@@ -915,16 +943,21 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
       responses:
-        "200":
-          description: Successful response.
+        "202":
+          description: Request accepted.
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/IdResponse"
+                    $ref: "#/components/schemas/SendMessageResponse"
                 required:
                   - data
                 additionalProperties: false
@@ -984,227 +1017,6 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/ThreadsResponseItem"
-                  nextCursor:
-                    type: string
-                    nullable: true
-                required:
-                  - data
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /inboxes/{inboxId}/messages:
-    post:
-      summary: Send Inbox Message
-      description: Send a new message from an inbox.
-      operationId: send-inbox-message
-      tags:
-        - Inboxes
-      parameters:
-        - name: inboxId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SendMessageRequest"
-      responses:
-        "202":
-          description: Request accepted.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/SendMessageResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /agents/{agentId}/memory:
-    get:
-      summary: Retrieve Agent Memory
-      description: Retrieve the memory for an AI agent.
-      operationId: retrieve-agent-memory
-      tags:
-        - Agents
-      parameters:
-        - name: agentId
-          in: path
-          required: true
-          description: The agent identifier.
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/AgentMemory"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    put:
-      summary: Upsert Agent Memory
-      description: Create or update the memory for an AI agent.
-      operationId: upsert-agent-memory
-      tags:
-        - Agents
-      parameters:
-        - name: agentId
-          in: path
-          required: true
-          description: The agent identifier.
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AgentMemoryRequest"
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/AgentMemory"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /threads/{threadId}:
-    get:
-      summary: Retrieve Thread
-      description: Retrieve a thread. Pass ?markRead=true to automatically remove the unread label from all messages.
-      operationId: retrieve-thread
-      tags:
-        - Threads
-      parameters:
-        - name: threadId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/ThreadResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    patch:
-      summary: Update Thread
-      description: Update thread labels and agent assignment. Label operations apply to all messages in the thread.
-      operationId: update-thread
-      tags:
-        - Threads
-      parameters:
-        - name: threadId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateThreadRequest"
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/IdResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /threads/{threadId}/messages:
-    get:
-      summary: List Thread Messages
-      description: List messages in a thread (chronological order).
-      operationId: list-thread-messages
-      tags:
-        - Threads
-      parameters:
-        - name: threadId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/ThreadMessagesResponseItem"
                   nextCursor:
                     type: string
                     nullable: true
@@ -1346,38 +1158,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /messages/{messageId}/content:
-    get:
-      summary: Retrieve Message Content
-      description: Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a received message.
-      operationId: retrieve-message-content
-      tags:
-        - Messages
-      parameters:
-        - name: messageId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/MessageContent"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
   /messages/{messageId}/attachments:
     get:
       summary: List Message Attachments
@@ -1447,35 +1227,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /messages/{messageId}/reply:
-    post:
-      summary: Reply To Message
-      description: Reply to a message. Set replyAll to true to reply to all recipients.
-      operationId: reply-to-message
+  /messages/{messageId}/content:
+    get:
+      summary: Retrieve Message Content
+      description: Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a received message.
+      operationId: retrieve-message-content
       tags:
         - Messages
       parameters:
         - name: messageId
           in: path
           required: true
-          description: The RFC 5322 Message-ID header.
           schema:
             type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReplyMessageRequest"
       responses:
-        "202":
-          description: Request accepted.
+        "200":
+          description: Successful response.
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/SendMessageResponse"
+                    $ref: "#/components/schemas/MessageContent"
                 required:
                   - data
                 additionalProperties: false
@@ -1504,6 +1278,44 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/ForwardMessageRequest"
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SendMessageResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /messages/{messageId}/reply:
+    post:
+      summary: Reply To Message
+      description: Reply to a message. Set replyAll to true to reply to all recipients.
+      operationId: reply-to-message
+      tags:
+        - Messages
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          description: The RFC 5322 Message-ID header.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplyMessageRequest"
       responses:
         "202":
           description: Request accepted.
@@ -1605,6 +1417,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
   /namespaces/{namespaceId}:
+    delete:
+      summary: Delete Namespace
+      description: Soft-delete a namespace. Rejects if it has active inboxes.
+      operationId: delete-namespace
+      tags:
+        - Namespaces
+      parameters:
+        - name: namespaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: Retrieve Namespace
       description: Retrieve a namespace with inbox stats.
@@ -1672,37 +1515,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-    delete:
-      summary: Delete Namespace
-      description: Soft-delete a namespace. Rejects if it has active inboxes.
-      operationId: delete-namespace
-      tags:
-        - Namespaces
-      parameters:
-        - name: namespaceId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/IdResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
   /namespaces/{namespaceId}/inboxes:
     get:
       summary: List Namespace Inboxes
@@ -1748,242 +1560,6 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/InboxesResponseItem"
-                  nextCursor:
-                    type: string
-                    nullable: true
-                required:
-                  - data
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /emails/bulk:
-    post:
-      summary: Send Bulk Emails
-      description: Send up to 20 emails in a single request. Use `fallback` to set default values shared across all messages.
-      operationId: send-bulk-emails
-      tags:
-        - Emails
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateBulkEmailsRequest"
-      responses:
-        "202":
-          description: Request accepted.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/CreateBulkEmailsResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /emails/bulk/{bulkId}:
-    get:
-      summary: Retrieve Bulk Emails
-      description: Returns the delivery status of all emails submitted in a bulk request.
-      operationId: retrieve-bulk-emails
-      tags:
-        - Emails
-      parameters:
-        - name: bulkId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/BulkEmailsResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /api-keys/{id}:
-    get:
-      summary: Retrieve Api Key
-      description: Returns API key metadata. The key value is never returned after creation.
-      operationId: retrieve-api-key
-      tags:
-        - API Keys
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the api key
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/ApiKeyResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    put:
-      summary: Update Api Key
-      description: Update the key name, permissions, or restrict it to specific sending domains.
-      operationId: update-api-key
-      tags:
-        - API Keys
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the api key
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateApiKeyRequest"
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/UpdateApiKeyResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    delete:
-      summary: Delete Api Key
-      description: Revoke an API key. Requests authenticating with this key will be rejected immediately.
-      operationId: delete-api-key
-      tags:
-        - API Keys
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the api key
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/DeleteApiKeyResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /api-keys:
-    post:
-      summary: Create Api Key
-      description: Generate a new API key. The key value is only returned once — store it securely.
-      operationId: create-api-key
-      tags:
-        - API Keys
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateApiKeyRequest"
-      responses:
-        "201":
-          description: Created.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: "#/components/schemas/CreateApiKeyResponse"
-                required:
-                  - data
-                additionalProperties: false
-        "500":
-          description: An error response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-    get:
-      summary: List Api Keys
-      description: Returns all API keys for the organization. Key values are never included in list responses.
-      operationId: list-api-keys
-      tags:
-        - API Keys
-      parameters:
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
-      responses:
-        "200":
-          description: Successful response.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/ApiKeysResponseItem"
                   nextCursor:
                     type: string
                     nullable: true
@@ -2069,6 +1645,430 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /organizations/{id}/usage:
+    get:
+      summary: Retrieve Organization Usage
+      description: Returns current period usage metrics (daily and monthly) for sending and receiving, against your plan limits.
+      operationId: retrieve-organization-usage
+      tags:
+        - Organizations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/OrganizationUsageResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /threads/{threadId}:
+    get:
+      summary: Retrieve Thread
+      description: Retrieve a thread. Pass ?markRead=true to automatically remove the unread label from all messages.
+      operationId: retrieve-thread
+      tags:
+        - Threads
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ThreadResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update Thread
+      description: Update thread labels and agent assignment. Label operations apply to all messages in the thread.
+      operationId: update-thread
+      tags:
+        - Threads
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateThreadRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /threads/{threadId}/messages:
+    get:
+      summary: List Thread Messages
+      description: List messages in a thread (chronological order).
+      operationId: list-thread-messages
+      tags:
+        - Threads
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ThreadMessagesResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /webhooks:
+    post:
+      summary: Create Webhook
+      description: Register an endpoint to start receiving webhook events for your organization.
+      operationId: create-webhook
+      tags:
+        - Webhooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWebhookRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/CreateWebhookResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List Webhooks
+      description: Returns all registered webhook endpoints for the organization.
+      operationId: list-webhooks
+      tags:
+        - Webhooks
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WebhooksResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /webhooks/{id}:
+    delete:
+      summary: Delete Webhook
+      description: Remove a webhook endpoint. No further events will be delivered to this URL.
+      operationId: delete-webhook
+      tags:
+        - Webhooks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the webhook
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DeleteWebhookResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: Retrieve Webhook
+      description: Returns a webhook endpoint with its URL, subscribed events, and configuration.
+      operationId: retrieve-webhook
+      tags:
+        - Webhooks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the webhook
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WebhookResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      summary: Update Webhook
+      description: Update the endpoint URL, subscribed event types, or rotate the signing secret.
+      operationId: update-webhook
+      tags:
+        - Webhooks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the webhook
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateWebhookRequest"
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/UpdateWebhookResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /webhooks/{id}/events/{eventId}/deliveries:
+    get:
+      summary: List Webhook Event Deliveries
+      description: Returns all delivery attempts for a webhook event, including HTTP status codes and response times.
+      operationId: list-webhook-event-deliveries
+      tags:
+        - Webhooks Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/WebhookEventDeliveriesResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /webhooks/{id}/events/{eventId}/replay:
+    post:
+      summary: Replay Webhook Event
+      description: Re-deliver a webhook event to its endpoint. Useful for retrying failed deliveries.
+      operationId: replay-webhook-event
+      tags:
+        - Webhooks Events
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Request accepted.
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /webhooks/events:
+    get:
+      summary: List Webhooks Events
+      description: Returns recent webhook events across all registered endpoints.
+      operationId: list-webhooks-events
+      tags:
+        - Webhooks Events
+      parameters:
+        - name: cursor
+          in: query
+          description: Pagination cursor from a previous response
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/WebhookEventsResponseItem"
+                  nextCursor:
+                    type: string
+                    nullable: true
+                required:
+                  - data
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   securitySchemes:
     bearerAuth:
@@ -2147,11 +2147,8 @@ components:
           type: string
         memory:
           description: The agent memory key-value data.
-          anyOf:
-            - type: array
-              items:
-                type: string
-            - type: string
+          type: object
+          additionalProperties: true
         summary:
           description: A human-readable conversation summary.
           type: string
@@ -2210,6 +2207,20 @@ components:
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
+    Attachment:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          description: The base64-encoded content of the attachment
+          type: string
+        filename:
+          description: The name of the attached file to be displayed to the recipient
+          type: string
+        contentType:
+          description: Content type of the attachment (the MIME type)
+          type: string
     AttachmentResponse:
       type: object
       required:
@@ -2259,7 +2270,17 @@ components:
         emails:
           type: array
           items:
-            type: string
+            type: object
+            required:
+              - id
+              - status
+            properties:
+              id:
+                type: string
+              status:
+                $ref: '#/components/schemas/EmailStatus'
+              detail:
+                type: string
     CreateApiKeyRequest:
       type: object
       required:
@@ -2321,13 +2342,101 @@ components:
         fallback:
           description: Used as a fallback field email value if no value is present in emails
           type: object
+          properties:
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            text:
+              type: string
+            html:
+              type: string
+            headers:
+              type: object
+              additionalProperties: true
+            tags:
+              type: array
+              items:
+                $ref: '#/components/schemas/Tag'
+            variables:
+              type: object
+              additionalProperties: true
+            scheduledAt:
+              type: string
         emails:
           description: The bulk emails to send
-          anyOf:
-            - type: array
-              items:
+          type: array
+          items:
+            type: object
+            properties:
+              from:
                 type: string
-            - type: string
+              to:
+                anyOf:
+                  - type: array
+                    items:
+                      type: string
+                  - type: string
+              cc:
+                anyOf:
+                  - type: array
+                    items:
+                      type: string
+                  - type: string
+              bcc:
+                anyOf:
+                  - type: array
+                    items:
+                      type: string
+                  - type: string
+              replyTo:
+                anyOf:
+                  - type: array
+                    items:
+                      type: string
+                  - type: string
+              subject:
+                type: string
+              text:
+                type: string
+              html:
+                type: string
+              headers:
+                type: object
+                additionalProperties: true
+              tags:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+              variables:
+                type: object
+                additionalProperties: true
+              scheduledAt:
+                type: string
     CreateBulkEmailsResponse:
       type: object
       required:
@@ -2339,7 +2448,14 @@ components:
         emails:
           type: array
           items:
-            type: string
+            type: object
+            required:
+              - status
+            properties:
+              id:
+                type: string
+              status:
+                $ref: '#/components/schemas/EmailStatus'
     CreateDomainRequest:
       type: object
       required:
@@ -2384,10 +2500,12 @@ components:
           type: string
         status:
           description: The status for the domain
-          type: string
+          $ref: '#/components/schemas/DomainStatus'
         region:
           description: The region of the domain data
           type: string
+          enum:
+            - eu-west-1
         statusAt:
           description: The date of the lastest verification of this record
           type: string
@@ -2409,7 +2527,7 @@ components:
           type: string
         receivingStatus:
           description: The receiving status for the domain
-          type: string
+          $ref: '#/components/schemas/DomainStatus'
         receivingStatusAt:
           description: The date of the latest receiving status change
           type: string
@@ -2421,11 +2539,49 @@ components:
           type: boolean
         records:
           description: The DNS records for your domain.
-          anyOf:
-            - type: array
-              items:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - fullname
+              - recordType
+              - ttl
+              - group
+              - value
+              - status
+              - statusAt
+            properties:
+              name:
                 type: string
-            - type: string
+              fullname:
+                type: string
+              recordType:
+                type: string
+                enum:
+                  - TXT
+                  - MX
+                  - CNAME
+              ttl:
+                type: string
+              group:
+                type: string
+                enum:
+                  - DKIM
+                  - SPF
+                  - MX
+                  - DMARC
+                  - MX_RECEIVING
+              selector:
+                type: string
+              priority:
+                type: string
+              value:
+                type: string
+              status:
+                $ref: '#/components/schemas/DomainStatus'
+              statusAt:
+                type: string
     CreateEmailRequest:
       type: object
       required:
@@ -2481,12 +2637,12 @@ components:
           description: The tags to add to the email
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/Tag'
         attachments:
           description: The attachements to add to the email
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/Attachment'
         variables:
           description: The variables for the template
           type: object
@@ -2505,7 +2661,7 @@ components:
           type: string
         status:
           description: The status of the email.
-          type: string
+          $ref: '#/components/schemas/EmailStatus'
     CreateInboxRequest:
       type: object
       required:
@@ -2555,12 +2711,11 @@ components:
           enum:
             - enabled
             - disabled
-            - revoked
         events:
           description: The event types to subscribe to
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/EventType'
     CreateWebhookResponse:
       type: object
       required:
@@ -2591,7 +2746,7 @@ components:
           description: The event types to subscribe to
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/EventType'
         signingSecret:
           description: The signing secret of the webhook.
           type: string
@@ -2625,7 +2780,7 @@ components:
           type: string
         status:
           description: The status of the email.
-          type: string
+          $ref: '#/components/schemas/EmailStatus'
     DeleteWebhookResponse:
       type: object
       required:
@@ -2664,10 +2819,12 @@ components:
           type: string
         status:
           description: The status for the domain
-          type: string
+          $ref: '#/components/schemas/DomainStatus'
         region:
           description: The region of the domain data
           type: string
+          enum:
+            - eu-west-1
         statusAt:
           description: The date of the lastest verification of this record
           type: string
@@ -2689,7 +2846,7 @@ components:
           type: string
         receivingStatus:
           description: The receiving status for the domain
-          type: string
+          $ref: '#/components/schemas/DomainStatus'
         receivingStatusAt:
           description: The date of the latest receiving status change
           type: string
@@ -2701,11 +2858,49 @@ components:
           type: boolean
         records:
           description: The DNS records for your domain.
-          anyOf:
-            - type: array
-              items:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - fullname
+              - recordType
+              - ttl
+              - group
+              - value
+              - status
+              - statusAt
+            properties:
+              name:
                 type: string
-            - type: string
+              fullname:
+                type: string
+              recordType:
+                type: string
+                enum:
+                  - TXT
+                  - MX
+                  - CNAME
+              ttl:
+                type: string
+              group:
+                type: string
+                enum:
+                  - DKIM
+                  - SPF
+                  - MX
+                  - DMARC
+                  - MX_RECEIVING
+              selector:
+                type: string
+              priority:
+                type: string
+              value:
+                type: string
+              status:
+                $ref: '#/components/schemas/DomainStatus'
+              statusAt:
+                type: string
     DomainsResponseItem:
       type: object
       required:
@@ -2725,7 +2920,7 @@ components:
           type: string
         status:
           description: The status for the domain
-          type: string
+          $ref: '#/components/schemas/DomainStatus'
         sendingStatus:
           description: The sending status for the domain
           type: string
@@ -2735,12 +2930,39 @@ components:
             - paused
         receivingStatus:
           description: The receiving status for the domain
-          type: string
+          $ref: '#/components/schemas/DomainStatus'
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
         region:
           description: The region of the domain data
+          type: string
+          enum:
+            - eu-west-1
+    DomainStatus:
+      type: string
+      enum:
+        - bootstrapping
+        - pending
+        - success
+        - failed
+        - temporary_failure
+    EmailContentItem:
+      type: object
+      required:
+        - downloadUrl
+        - size
+        - expiresAt
+      properties:
+        downloadUrl:
+          description: Presigned download URL.
+          type: string
+        size:
+          description: Uncompressed size in bytes.
+          type: number
+          nullable: true
+        expiresAt:
+          description: When the URL expires.
           type: string
     EmailContentResponse:
       type: object
@@ -2754,27 +2976,27 @@ components:
       properties:
         html:
           description: HTML content, or `null` if unavailable.
-          type: string
+          $ref: '#/components/schemas/EmailContentItem'
           nullable: true
         text:
           description: Plain text content, or `null` if unavailable.
-          type: string
+          $ref: '#/components/schemas/EmailContentItem'
           nullable: true
         mime:
           description: Raw MIME (.eml) content, or `null` if unavailable.
-          type: string
+          $ref: '#/components/schemas/EmailContentItem'
           nullable: true
         subjectTemplate:
           description: Subject template content, or `null` if unavailable. Returned for failed emails only.
-          type: string
+          $ref: '#/components/schemas/EmailContentItem'
           nullable: true
         htmlTemplate:
           description: HTML template content, or `null` if unavailable. Returned for failed emails only.
-          type: string
+          $ref: '#/components/schemas/EmailContentItem'
           nullable: true
         textTemplate:
           description: Text template content, or `null` if unavailable. Returned for failed emails only.
-          type: string
+          $ref: '#/components/schemas/EmailContentItem'
           nullable: true
     EmailEventsResponse:
       type: array
@@ -2806,7 +3028,7 @@ components:
           type: string
         eventType:
           description: An event
-          type: string
+          $ref: '#/components/schemas/EventType'
         payload:
           type: object
           additionalProperties: true
@@ -2859,7 +3081,7 @@ components:
             - type: string
         status:
           description: The status of the email.
-          type: string
+          $ref: '#/components/schemas/EmailStatus'
         statusReason:
           description: May provide more informations about the status
           type: object
@@ -2882,12 +3104,19 @@ components:
           description: The tags to add to the email
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/Tag'
         attachments:
           description: The attachements
           type: array
           items:
-            type: string
+            type: object
+            properties:
+              filename:
+                type: string
+              contentType:
+                type: string
+              size:
+                type: number
         variables:
           description: The variables for the template
           type: object
@@ -2926,7 +3155,7 @@ components:
           type: string
         status:
           description: The status of the email.
-          type: string
+          $ref: '#/components/schemas/EmailStatus'
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -2949,7 +3178,101 @@ components:
         stats:
           type: array
           items:
-            type: string
+            type: object
+            required:
+              - occurredOn
+              - queued
+              - scheduled
+              - processed
+              - sending
+              - sent
+              - delivered
+              - deliveredDelayed
+              - bounced
+              - failed
+              - rejected
+              - canceled
+              - complaintReceived
+              - renderingFailed
+              - opened
+              - uniqueOpened
+              - clicked
+              - uniqueClicked
+            properties:
+              occurredOn:
+                type: string
+              queued:
+                type: number
+              scheduled:
+                type: number
+              processed:
+                type: number
+              sending:
+                type: number
+              sent:
+                type: number
+              delivered:
+                type: number
+              deliveredDelayed:
+                type: number
+              bounced:
+                type: number
+              failed:
+                type: number
+              rejected:
+                type: number
+              canceled:
+                type: number
+              complaintReceived:
+                type: number
+              renderingFailed:
+                type: number
+              opened:
+                type: number
+              uniqueOpened:
+                type: number
+              clicked:
+                type: number
+              uniqueClicked:
+                type: number
+    EmailStatus:
+      type: string
+      enum:
+        - queued
+        - scheduled
+        - processed
+        - failed
+        - sending
+        - sent
+        - delivered
+        - bounced
+        - complained
+        - canceled
+        - rejected
+    EventType:
+      type: string
+      enum:
+        - email.queued
+        - email.scheduled
+        - email.processed
+        - email.sending
+        - email.sent
+        - email.delivered
+        - email.opened
+        - email.clicked
+        - email.bounced
+        - email.complained
+        - email.rejected
+        - email.deliveryDelayed
+        - email.failed
+        - email.renderingFailed
+        - email.subscribed
+        - email.unsubscribed
+        - message.received
+        - message.security.flagged
+        - message.agent.triggered
+        - message.sent
+        - message.rejected
     ForwardMessageRequest:
       type: object
       required:
@@ -3133,16 +3456,33 @@ components:
       properties:
         text:
           description: Plain text content, or `null` if not requested or unavailable.
-          type: string
+          $ref: '#/components/schemas/MessageContentItem'
           nullable: true
         html:
           description: HTML content, or `null` if not requested or unavailable.
-          type: string
+          $ref: '#/components/schemas/MessageContentItem'
           nullable: true
         mime:
           description: Raw MIME (.eml) content, or `null` if not requested or unavailable. Returned for received messages only.
-          type: string
+          $ref: '#/components/schemas/MessageContentItem'
           nullable: true
+    MessageContentItem:
+      type: object
+      required:
+        - downloadUrl
+        - size
+        - expiresAt
+      properties:
+        downloadUrl:
+          description: Presigned download URL.
+          type: string
+        size:
+          description: Uncompressed size in bytes.
+          type: number
+          nullable: true
+        expiresAt:
+          description: When the URL expires.
+          type: string
     MessageResponse:
       type: object
       required:
@@ -3189,15 +3529,21 @@ components:
             type: string
         cc:
           description: The CC addresses.
-          type: string
+          type: array
+          items:
+            type: string
           nullable: true
         bcc:
           description: The BCC addresses.
-          type: string
+          type: array
+          items:
+            type: string
           nullable: true
         replyTo:
           description: The Reply-To addresses.
-          type: string
+          type: array
+          items:
+            type: string
           nullable: true
         subject:
           description: The message subject.
@@ -3223,7 +3569,8 @@ components:
           type: number
         headers:
           description: The raw email headers.
-          type: string
+          type: object
+          additionalProperties: true
           nullable: true
     MessagesQuery:
       type: object
@@ -3285,15 +3632,21 @@ components:
             type: string
         cc:
           description: The CC addresses.
-          type: string
+          type: array
+          items:
+            type: string
           nullable: true
         bcc:
           description: The BCC addresses.
-          type: string
+          type: array
+          items:
+            type: string
           nullable: true
         replyTo:
           description: The Reply-To addresses.
-          type: string
+          type: array
+          items:
+            type: string
           nullable: true
         subject:
           description: The message subject.
@@ -3460,6 +3813,52 @@ components:
       properties:
         transactional:
           type: object
+          required:
+            - limits
+            - usage
+            - sending
+            - receiving
+          properties:
+            limits:
+              type: object
+              required:
+                - daily
+                - monthly
+              properties:
+                daily:
+                  type: number
+                monthly:
+                  type: number
+            usage:
+              type: object
+              required:
+                - daily
+                - monthly
+              properties:
+                daily:
+                  type: number
+                monthly:
+                  type: number
+            sending:
+              type: object
+              required:
+                - daily
+                - monthly
+              properties:
+                daily:
+                  type: number
+                monthly:
+                  type: number
+            receiving:
+              type: object
+              required:
+                - daily
+                - monthly
+              properties:
+                daily:
+                  type: number
+                monthly:
+                  type: number
     ReplyMessageRequest:
       type: object
       required:
@@ -3524,6 +3923,18 @@ components:
         subject:
           description: The subject of the message.
           type: string
+    Tag:
+      type: object
+      required:
+        - name
+        - value
+      properties:
+        name:
+          description: The name of the tag
+          type: string
+        value:
+          description: The tag to add to the email
+          type: string
     ThreadMessagesResponseItem:
       type: object
       required:
@@ -3564,15 +3975,21 @@ components:
             type: string
         cc:
           description: The CC addresses.
-          type: string
+          type: array
+          items:
+            type: string
           nullable: true
         bcc:
           description: The BCC addresses.
-          type: string
+          type: array
+          items:
+            type: string
           nullable: true
         replyTo:
           description: The Reply-To addresses.
-          type: string
+          type: array
+          items:
+            type: string
           nullable: true
         subject:
           description: The message subject.
@@ -3833,14 +4250,13 @@ components:
           description: The event types to subscribe to
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/EventType'
         status:
           description: The status of the webhook.
           type: string
           enum:
             - enabled
             - disabled
-            - revoked
         rotateSecret:
           description: If true, a new signing secret will be generated
           type: boolean
@@ -3904,7 +4320,7 @@ components:
           type: string
         event:
           description: An event
-          type: string
+          $ref: '#/components/schemas/EventType'
         successfulAt:
           description: The timestamp when the event was successfully delivered to the endpoint
           type: string
@@ -3940,7 +4356,7 @@ components:
           description: The event types to subscribe to
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/EventType'
         status:
           description: The status of the webhook.
           type: string
@@ -3980,7 +4396,7 @@ components:
           description: The event types to subscribe to
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/EventType'
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
