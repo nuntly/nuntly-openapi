@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nuntly REST API 1.x
-  version: 1.0.0-alpha.11
+  version: 1.0.0-alpha.12
   description: Nuntly REST API definition
   termsOfService: https://nuntly.com/legal/terms-of-service
   contact:
@@ -39,6 +39,8 @@ tags:
     description: Register HTTP endpoints to receive real-time delivery events such as bounces, opens, and clicks.
   - name: Webhooks Events
     description: Inspect webhook event history and replay failed deliveries for debugging or recovery.
+  - name: Webhooks Hook
+    description: Endpoint your server implements to receive webhook events. Not a Nuntly API endpoint - this documents the shape your handler must accept.
 paths:
   /agents/{agentId}/memory:
     get:
@@ -2069,32 +2071,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+webhooks:
+  webhook-endpoint:
+    post:
+      summary: Webhook Endpoint
+      description: Endpoint your application exposes to receive webhook events from Nuntly. The request body is a single event from the `Event` discriminated union.
+      tags:
+        - Webhooks Hook
+      operationId: webhook-endpoint
+      security:
+        []
+      requestBody:
+        description: Nuntly webhook event payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Event"
+      responses:
+        200:
+          description: Webhook received successfully
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
   schemas:
-    ErrorResponse:
-      type: object
-      properties:
-        message:
-          type: string
-          description: Human-readable error message
-        code:
-          type: string
-          description: Machine-readable error code
-        errors:
-          type: array
-          items:
-            type: object
-            properties:
-              field:
-                type: string
-              message:
-                type: string
-      required:
-        - message
     AgentMemory:
       type: object
       required:
@@ -2947,6 +2949,374 @@ components:
         - success
         - failed
         - temporary_failure
+    EmailBouncedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.bounced
+        data:
+          type: object
+          required:
+            - id
+            - orgId
+            - messageId
+            - sentAt
+            - enqueuedAt
+            - domainName
+            - domainId
+            - from
+            - to
+            - subject
+            - bounce
+          properties:
+            id:
+              type: string
+            orgId:
+              type: string
+            bulkId:
+              type: string
+            messageId:
+              type: string
+            sentAt:
+              type: string
+            enqueuedAt:
+              type: string
+            domainName:
+              type: string
+            domainId:
+              type: string
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            tags:
+              type: object
+              additionalProperties: true
+            bounce:
+              type: object
+              required:
+                - bounceType
+                - bounceSubType
+                - bouncedRecipients
+                - bouncedAt
+                - feedbackId
+              properties:
+                bounceType:
+                  type: string
+                  enum:
+                    - Permanent
+                    - Undetermined
+                    - Transient
+                bounceSubType:
+                  type: string
+                  enum:
+                    - Undetermined
+                    - General
+                    - NoEmail
+                    - Suppressed
+                    - OnAccountSuppressionList
+                    - MailboxFull
+                    - MessageTooLarge
+                    - CustomTimeoutExceeded
+                    - ContentRejected
+                    - AttachmentRejected
+                bouncedRecipients:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - email
+                    properties:
+                      email:
+                        type: string
+                      action:
+                        type: string
+                      status:
+                        type: string
+                      diagnosticCode:
+                        type: string
+                bouncedAt:
+                  type: string
+                feedbackId:
+                  type: string
+                reportingMta:
+                  type: string
+    EmailClickedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.clicked
+        data:
+          type: object
+          required:
+            - id
+            - orgId
+            - messageId
+            - sentAt
+            - enqueuedAt
+            - domainName
+            - domainId
+            - from
+            - to
+            - subject
+            - click
+          properties:
+            id:
+              type: string
+            orgId:
+              type: string
+            bulkId:
+              type: string
+            messageId:
+              type: string
+            sentAt:
+              type: string
+            enqueuedAt:
+              type: string
+            domainName:
+              type: string
+            domainId:
+              type: string
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            tags:
+              type: object
+              additionalProperties: true
+            click:
+              type: object
+              required:
+                - clickedAt
+                - userAgent
+                - link
+              properties:
+                clickedAt:
+                  type: string
+                userAgent:
+                  type: string
+                link:
+                  type: string
+    EmailComplainedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.complained
+        data:
+          type: object
+          required:
+            - id
+            - orgId
+            - messageId
+            - sentAt
+            - enqueuedAt
+            - domainName
+            - domainId
+            - from
+            - to
+            - subject
+            - complaint
+          properties:
+            id:
+              type: string
+            orgId:
+              type: string
+            bulkId:
+              type: string
+            messageId:
+              type: string
+            sentAt:
+              type: string
+            enqueuedAt:
+              type: string
+            domainName:
+              type: string
+            domainId:
+              type: string
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            tags:
+              type: object
+              additionalProperties: true
+            complaint:
+              type: object
+              required:
+                - complainedAt
+                - feedbackId
+              properties:
+                complainedAt:
+                  type: string
+                complainedRecipients:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - email
+                    properties:
+                      email:
+                        type: string
+                complaintSubType:
+                  type: string
+                  enum:
+                    - OnAccountSuppressionList
+                complaintFeedbackType:
+                  type: string
+                  enum:
+                    - abuse
+                    - auth-failure
+                    - fraud
+                    - not-spam
+                    - other
+                    - virus
+                feedbackId:
+                  type: string
+                userAgent:
+                  type: string
+                receivedAt:
+                  type: string
     EmailContentItem:
       type: object
       required:
@@ -2998,6 +3368,250 @@ components:
           description: Text template content, or `null` if unavailable. Returned for failed emails only.
           $ref: '#/components/schemas/EmailContentItem'
           nullable: true
+    EmailDeliveredEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.delivered
+        data:
+          type: object
+          required:
+            - id
+            - orgId
+            - messageId
+            - sentAt
+            - enqueuedAt
+            - domainName
+            - domainId
+            - from
+            - to
+            - subject
+            - delivery
+          properties:
+            id:
+              type: string
+            orgId:
+              type: string
+            bulkId:
+              type: string
+            messageId:
+              type: string
+            sentAt:
+              type: string
+            enqueuedAt:
+              type: string
+            domainName:
+              type: string
+            domainId:
+              type: string
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            tags:
+              type: object
+              additionalProperties: true
+            delivery:
+              type: object
+              required:
+                - deliveredAt
+                - recipients
+                - smtpResponse
+                - remoteMtaIp
+                - reportingMta
+              properties:
+                deliveredAt:
+                  type: string
+                recipients:
+                  type: array
+                  items:
+                    type: string
+                smtpResponse:
+                  type: string
+                remoteMtaIp:
+                  type: string
+                reportingMta:
+                  type: string
+                processingTime:
+                  type: number
+    EmailDeliveryDelayedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.deliveryDelayed
+        data:
+          type: object
+          required:
+            - id
+            - orgId
+            - messageId
+            - sentAt
+            - enqueuedAt
+            - domainName
+            - domainId
+            - from
+            - to
+            - subject
+            - deliveryDelay
+          properties:
+            id:
+              type: string
+            orgId:
+              type: string
+            bulkId:
+              type: string
+            messageId:
+              type: string
+            sentAt:
+              type: string
+            enqueuedAt:
+              type: string
+            domainName:
+              type: string
+            domainId:
+              type: string
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            tags:
+              type: object
+              additionalProperties: true
+            deliveryDelay:
+              type: object
+              required:
+                - delayedAt
+                - delayType
+                - delayedRecipients
+                - deliveryStoppedAt
+                - reportingMta
+              properties:
+                delayedAt:
+                  type: string
+                delayType:
+                  type: string
+                  enum:
+                    - InternalFailure
+                    - General
+                    - MailboxFull
+                    - SpamDetected
+                    - RecipientServerError
+                    - IPFailure
+                    - TransientCommunicationFailure
+                    - BYOIPHostNameLookupUnavailable
+                    - Undetermined
+                    - SendingDeferral
+                delayedRecipients:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - email
+                    properties:
+                      email:
+                        type: string
+                      status:
+                        type: string
+                      diagnosticCode:
+                        type: string
+                deliveryStoppedAt:
+                  type: string
+                reportingMta:
+                  type: string
     EmailEventsResponse:
       type: array
       items:
@@ -3032,6 +3646,339 @@ components:
         payload:
           type: object
           additionalProperties: true
+    EmailFailedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.failed
+        data:
+          type: object
+          required:
+            - id
+            - orgId
+            - messageId
+            - sentAt
+            - enqueuedAt
+            - domainName
+            - domainId
+            - from
+            - to
+            - subject
+            - failure
+          properties:
+            id:
+              type: string
+            orgId:
+              type: string
+            bulkId:
+              type: string
+            messageId:
+              type: string
+            sentAt:
+              type: string
+            enqueuedAt:
+              type: string
+            domainName:
+              type: string
+            domainId:
+              type: string
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            tags:
+              type: object
+              additionalProperties: true
+            failure:
+              type: object
+              required:
+                - error
+              properties:
+                error:
+                  type: object
+                  additionalProperties: true
+    EmailOpenedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.opened
+        data:
+          type: object
+          required:
+            - id
+            - orgId
+            - messageId
+            - sentAt
+            - enqueuedAt
+            - domainName
+            - domainId
+            - from
+            - to
+            - subject
+            - open
+          properties:
+            id:
+              type: string
+            orgId:
+              type: string
+            bulkId:
+              type: string
+            messageId:
+              type: string
+            sentAt:
+              type: string
+            enqueuedAt:
+              type: string
+            domainName:
+              type: string
+            domainId:
+              type: string
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            tags:
+              type: object
+              additionalProperties: true
+            open:
+              type: object
+              required:
+                - openedAt
+                - userAgent
+              properties:
+                openedAt:
+                  type: string
+                userAgent:
+                  type: string
+    EmailProcessedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.processed
+        data:
+          type: object
+          required:
+            - processed
+          properties:
+            processed:
+              type: object
+              additionalProperties: true
+    EmailQueuedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.queued
+        data:
+          type: object
+          required:
+            - queue
+          properties:
+            queue:
+              type: object
+              additionalProperties: true
+    EmailRejectedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.rejected
+        data:
+          type: object
+          required:
+            - reject
+          properties:
+            id:
+              type: string
+            orgId:
+              type: string
+            bulkId:
+              type: string
+            messageId:
+              type: string
+            sentAt:
+              type: string
+            enqueuedAt:
+              type: string
+            domainName:
+              type: string
+            domainId:
+              type: string
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            tags:
+              type: object
+              additionalProperties: true
+            reject:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
     EmailResponse:
       type: object
       required:
@@ -3127,6 +4074,220 @@ components:
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
+    EmailScheduledEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.scheduled
+        data:
+          type: object
+          required:
+            - schedule
+          properties:
+            schedule:
+              type: object
+              required:
+                - scheduledAt
+              properties:
+                scheduledAt:
+                  type: string
+    EmailSendingEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.sending
+        data:
+          type: object
+          required:
+            - id
+            - orgId
+            - messageId
+            - sentAt
+            - enqueuedAt
+            - domainName
+            - domainId
+            - from
+            - to
+            - subject
+            - sending
+          properties:
+            id:
+              type: string
+            orgId:
+              type: string
+            bulkId:
+              type: string
+            messageId:
+              type: string
+            sentAt:
+              type: string
+            enqueuedAt:
+              type: string
+            domainName:
+              type: string
+            domainId:
+              type: string
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            tags:
+              type: object
+              additionalProperties: true
+            sending:
+              type: object
+              additionalProperties: true
+    EmailSentEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - email.sent
+        data:
+          type: object
+          required:
+            - id
+            - orgId
+            - messageId
+            - sentAt
+            - enqueuedAt
+            - domainName
+            - domainId
+            - from
+            - to
+            - subject
+            - send
+          properties:
+            id:
+              type: string
+            orgId:
+              type: string
+            bulkId:
+              type: string
+            messageId:
+              type: string
+            sentAt:
+              type: string
+            enqueuedAt:
+              type: string
+            domainName:
+              type: string
+            domainId:
+              type: string
+            from:
+              type: string
+            to:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            cc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            bcc:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            replyTo:
+              anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            subject:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            tags:
+              type: object
+              additionalProperties: true
+            send:
+              type: object
+              additionalProperties: true
     EmailsResponseItem:
       type: object
       required:
@@ -3249,6 +4410,54 @@ components:
         - complained
         - canceled
         - rejected
+    Error:
+      type: object
+      required:
+        - status
+        - code
+        - title
+      properties:
+        status:
+          description: The HTTP status code generated by the origin server for this occurrence of the error.
+          type: number
+        code:
+          description: An API specific code representing the type of error.
+          type: string
+        title:
+          description: A short, human-readable summary of the error type.
+          type: string
+        details:
+          description: A (best effort) human readable explanation specific to this occurrence of the error.
+          type: object
+          additionalProperties: true
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          description: This object provide you additional information about errors encountered while performing the operation
+          $ref: '#/components/schemas/Error'
+    Event:
+      oneOf:
+        - $ref: "#/components/schemas/EmailQueuedEvent"
+        - $ref: "#/components/schemas/EmailScheduledEvent"
+        - $ref: "#/components/schemas/EmailProcessedEvent"
+        - $ref: "#/components/schemas/EmailSendingEvent"
+        - $ref: "#/components/schemas/EmailSentEvent"
+        - $ref: "#/components/schemas/EmailDeliveredEvent"
+        - $ref: "#/components/schemas/EmailOpenedEvent"
+        - $ref: "#/components/schemas/EmailClickedEvent"
+        - $ref: "#/components/schemas/EmailBouncedEvent"
+        - $ref: "#/components/schemas/EmailComplainedEvent"
+        - $ref: "#/components/schemas/EmailRejectedEvent"
+        - $ref: "#/components/schemas/EmailDeliveryDelayedEvent"
+        - $ref: "#/components/schemas/EmailFailedEvent"
+        - $ref: "#/components/schemas/MessageReceivedEvent"
+        - $ref: "#/components/schemas/MessageSecurityFlaggedEvent"
+        - $ref: "#/components/schemas/MessageAgentTriggeredEvent"
+        - $ref: "#/components/schemas/MessageSentEvent"
+        - $ref: "#/components/schemas/MessageRejectedEvent"
     EventType:
       type: string
       enum:
@@ -3447,6 +4656,52 @@ components:
           description: The AI agent identifier.
           type: string
           nullable: true
+    MessageAgentTriggeredEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - message.agent.triggered
+        data:
+          type: object
+          required:
+            - orgId
+            - domainId
+            - domainName
+            - inboxId
+            - threadId
+            - messageId
+            - from
+            - subject
+          properties:
+            orgId:
+              type: string
+            domainId:
+              type: string
+            domainName:
+              type: string
+            inboxId:
+              type: string
+            threadId:
+              type: string
+            messageId:
+              type: string
+            from:
+              type: string
+            subject:
+              type: string
+            agentId:
+              type: string
     MessageContent:
       type: object
       required:
@@ -3483,6 +4738,96 @@ components:
         expiresAt:
           description: When the URL expires.
           type: string
+    MessageReceivedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - message.received
+        data:
+          type: object
+          required:
+            - orgId
+            - domainId
+            - domainName
+            - inboxId
+            - threadId
+            - messageId
+            - from
+            - subject
+          properties:
+            orgId:
+              type: string
+            domainId:
+              type: string
+            domainName:
+              type: string
+            inboxId:
+              type: string
+            threadId:
+              type: string
+            messageId:
+              type: string
+            from:
+              type: string
+            subject:
+              type: string
+            agentId:
+              type: string
+    MessageRejectedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - message.rejected
+        data:
+          type: object
+          required:
+            - orgId
+            - domainId
+            - domainName
+            - inboxId
+            - from
+            - subject
+            - reason
+          properties:
+            orgId:
+              type: string
+            domainId:
+              type: string
+            domainName:
+              type: string
+            inboxId:
+              type: string
+            from:
+              type: string
+            subject:
+              type: string
+            reason:
+              type: string
+              enum:
+                - inbox_storage_limit_exceeded
+                - message_too_large
     MessageResponse:
       type: object
       required:
@@ -3572,6 +4917,98 @@ components:
           type: object
           additionalProperties: true
           nullable: true
+    MessageSecurityFlaggedEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - message.security.flagged
+        data:
+          type: object
+          required:
+            - orgId
+            - domainId
+            - domainName
+            - inboxId
+            - threadId
+            - messageId
+            - from
+            - subject
+          properties:
+            orgId:
+              type: string
+            domainId:
+              type: string
+            domainName:
+              type: string
+            inboxId:
+              type: string
+            threadId:
+              type: string
+            messageId:
+              type: string
+            from:
+              type: string
+            subject:
+              type: string
+            agentId:
+              type: string
+    MessageSentEvent:
+      type: object
+      required:
+        - id
+        - createdAt
+        - type
+        - data
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+        type:
+          type: string
+          enum:
+            - message.sent
+        data:
+          type: object
+          required:
+            - orgId
+            - domainId
+            - domainName
+            - inboxId
+            - threadId
+            - messageId
+            - from
+            - subject
+          properties:
+            orgId:
+              type: string
+            domainId:
+              type: string
+            domainName:
+              type: string
+            inboxId:
+              type: string
+            threadId:
+              type: string
+            messageId:
+              type: string
+            from:
+              type: string
+            subject:
+              type: string
+            agentId:
+              type: string
     MessagesQuery:
       type: object
       properties:
