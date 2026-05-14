@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nuntly REST API 1.x
-  version: 1.0.0-alpha.12
+  version: 1.0.0-alpha.13
   description: Nuntly REST API definition
   termsOfService: https://nuntly.com/legal/terms-of-service
   contact:
@@ -84,7 +84,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.agents.memory.retrieve('agentId_value');
+            const response = await client.agents.memory.retrieve('aB3dE7fG');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -94,7 +94,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.agents().memory().retrieve("agentId_value");
+            var response = nuntly.agents().memory().retrieve("aB3dE7fG");
     put:
       summary: Upsert Agent Memory
       description: Create or update the memory for an AI agent.
@@ -141,7 +141,9 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.agents.memory.upsert('agentId_value', { /* ... */ });
+            const response = await client.agents.memory.upsert('aB3dE7fG', {
+              memory: {  },
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -152,7 +154,9 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.agents().memory().upsert("agentId_value", AgentMemoryRequest.builder().build());
+            var response = nuntly.agents().memory().upsert("aB3dE7fG", AgentMemoryRequest.builder()
+                .memory(List.of(java.util.Map.of()))
+                .build());
   /api-keys:
     post:
       summary: Create Api Key
@@ -193,7 +197,10 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.apiKeys.create({ /* ... */ });
+            const response = await client.apiKeys.create({
+              name: 'Production',
+              permission: 'fullAccess',
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -204,7 +211,10 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.apiKeys().create(CreateApiKeyRequest.builder().build());
+            var response = nuntly.apiKeys().create(CreateApiKeyRequest.builder()
+                .name("Production")
+                .permission("fullAccess")
+                .build());
     get:
       summary: List Api Keys
       description: Returns all API keys for the organization. Key values are never included in list responses.
@@ -307,7 +317,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.apiKeys.delete('id_value');
+            const response = await client.apiKeys.delete('apk_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -317,7 +327,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.apiKeys().delete("id_value");
+            var response = nuntly.apiKeys().delete("apk_01ka8k8s80gvx9604cn9am5st4");
     get:
       summary: Retrieve Api Key
       description: Returns API key metadata. The key value is never returned after creation.
@@ -359,7 +369,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.apiKeys.retrieve('id_value');
+            const response = await client.apiKeys.retrieve('apk_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -369,8 +379,8 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.apiKeys().retrieve("id_value");
-    put:
+            var response = nuntly.apiKeys().retrieve("apk_01ka8k8s80gvx9604cn9am5st4");
+    patch:
       summary: Update Api Key
       description: Update the key name, permissions, or restrict it to specific sending domains.
       operationId: update-api-key
@@ -416,7 +426,9 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.apiKeys.update('id_value', { /* ... */ });
+            const response = await client.apiKeys.update('apk_01ka8k8s80gvx9604cn9am5st4', {
+              name: 'Production',
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -427,7 +439,9 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.apiKeys().update("id_value", UpdateApiKeyRequest.builder().build());
+            var response = nuntly.apiKeys().update("apk_01ka8k8s80gvx9604cn9am5st4", UpdateApiKeyRequest.builder()
+                .name("Production")
+                .build());
   /domains:
     post:
       summary: Create Domain
@@ -449,7 +463,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/CreateDomainResponse"
+                    $ref: "#/components/schemas/DomainRecordsResponse"
                 required:
                   - data
                 additionalProperties: false
@@ -468,7 +482,9 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.domains.create({ /* ... */ });
+            const response = await client.domains.create({
+              name: 'example.com',
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -479,7 +495,9 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.domains().create(CreateDomainRequest.builder().build());
+            var response = nuntly.domains().create(CreateDomainRequest.builder()
+                .name("example.com")
+                .build());
     get:
       summary: List Domains
       description: Returns all domains with their verification and capability status.
@@ -582,7 +600,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.domains.delete('id_value');
+            const response = await client.domains.delete('dns_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -592,7 +610,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.domains().delete("id_value");
+            var response = nuntly.domains().delete("dns_01kabn43yqyxn2bx4ve84mczd3");
     get:
       summary: Retrieve Domain
       description: Returns a domain with its DNS record configuration and current verification status for each record.
@@ -634,7 +652,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.domains.retrieve('id_value');
+            const response = await client.domains.retrieve('dns_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -644,7 +662,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.domains().retrieve("id_value");
+            var response = nuntly.domains().retrieve("dns_01kabn43yqyxn2bx4ve84mczd3");
     patch:
       summary: Update Domain
       description: Toggle sending, receiving, open tracking, or click tracking capabilities for a domain.
@@ -691,7 +709,10 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.domains.update('id_value', { /* ... */ });
+            const response = await client.domains.update('dns_01kabn43yqyxn2bx4ve84mczd3', {
+              openTracking: true,
+              clickTracking: true,
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -702,7 +723,10 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.domains().update("id_value", UpdateDomainRequest.builder().build());
+            var response = nuntly.domains().update("dns_01kabn43yqyxn2bx4ve84mczd3", UpdateDomainRequest.builder()
+                .openTracking(true)
+                .clickTracking(true)
+                .build());
   /emails:
     get:
       summary: List Emails
@@ -803,7 +827,14 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.emails.send({ /* ... */ });
+            const response = await client.emails.send({
+              from: 'Tomlinson AI <ray@info.tomlinson.ai>',
+              to: 'brian67@gmail.com',
+              subject: 'Verify your email address',
+              text: 'Thank you for signing up! Please verify your email address.',
+              html: '<h1>Welcome 🎉</h1><p>Thank you for signing up! Please verify your email address.</p>',
+              tags: [{ name: 'category', value: 'transactional' }],
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -814,7 +845,14 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.emails().send(CreateEmailRequest.builder().build());
+            var response = nuntly.emails().send(CreateEmailRequest.builder()
+                .from("Tomlinson AI <ray@info.tomlinson.ai>")
+                .to(List.of("brian67@gmail.com"))
+                .subject("Verify your email address")
+                .text("Thank you for signing up! Please verify your email address.")
+                .html("<h1>Welcome 🎉</h1><p>Thank you for signing up! Please verify your email address.</p>")
+                .tags(List.of(java.util.Map.of()))
+                .build());
   /emails/{id}:
     delete:
       summary: Cancel Email
@@ -857,7 +895,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.emails.cancel('id_value');
+            const response = await client.emails.cancel('em_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -867,7 +905,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.emails().cancel("id_value");
+            var response = nuntly.emails().cancel("em_01ka8k8s80gvx9604cn9am5st4");
     get:
       summary: Retrieve Email
       description: Returns an email with its current delivery status and metadata.
@@ -909,7 +947,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.emails.retrieve('id_value');
+            const response = await client.emails.retrieve('em_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -919,7 +957,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.emails().retrieve("id_value");
+            var response = nuntly.emails().retrieve("em_01ka8k8s80gvx9604cn9am5st4");
   /emails/{id}/content:
     get:
       summary: Retrieve Email Content
@@ -961,7 +999,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.emails.content.retrieve('id_value');
+            const response = await client.emails.content.retrieve('apk_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -971,7 +1009,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.emails().content().retrieve("id_value");
+            var response = nuntly.emails().content().retrieve("apk_01ka8k8s80gvx9604cn9am5st4");
   /emails/{id}/events:
     get:
       summary: Retrieve Email Events
@@ -1013,7 +1051,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.emails.events.list('id_value');
+            const response = await client.emails.events.list('apk_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1023,7 +1061,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.emails().events().list("id_value");
+            var response = nuntly.emails().events().list("apk_01ka8k8s80gvx9604cn9am5st4");
   /emails/bulk:
     post:
       summary: Send Bulk Emails
@@ -1064,7 +1102,9 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.emails.bulk.send({ /* ... */ });
+            const response = await client.emails.bulk.send({
+              emails: [{ from: 'Tomlinson AI <ray@info.tomlinson.ai>', to: 'brian67@gmail.com', subject: 'Verify your email address', text: 'Thank you for signing up! Please verify your email address.' }],
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1075,7 +1115,9 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.emails().bulk().send(CreateBulkEmailsRequest.builder().build());
+            var response = nuntly.emails().bulk().send(CreateBulkEmailsRequest.builder()
+                .emails(List.of(java.util.Map.of()))
+                .build());
   /emails/bulk/{bulkId}:
     get:
       summary: Retrieve Bulk Emails
@@ -1117,7 +1159,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.emails.bulk.list('bulkId_value');
+            const response = await client.emails.bulk.list('blk_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1127,7 +1169,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.emails().bulk().list("bulkId_value");
+            var response = nuntly.emails().bulk().list("blk_01ka8k8s80gvx9604cn9am5st4");
   /emails/stats:
     get:
       summary: Retrieve Email Stats
@@ -1214,7 +1256,9 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.inboxes.create({ /* ... */ });
+            const response = await client.inboxes.create({
+              address: '<address>',
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1225,7 +1269,9 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.inboxes().create(CreateInboxRequest.builder().build());
+            var response = nuntly.inboxes().create(CreateInboxRequest.builder()
+                .address("<address>")
+                .build());
     get:
       summary: List Inboxes
       description: List all inboxes.
@@ -1342,7 +1388,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.inboxes.delete('inboxId_value');
+            const response = await client.inboxes.delete('ibx_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1352,10 +1398,10 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.inboxes().delete("inboxId_value");
+            var response = nuntly.inboxes().delete("ibx_01kabn43yqyxn2bx4ve84mczd3");
     get:
       summary: Retrieve Inbox
-      description: Retrieve an inbox with thread stats.
+      description: Retrieve an inbox.
       operationId: retrieve-inbox
       tags:
         - Inboxes
@@ -1374,7 +1420,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    $ref: "#/components/schemas/InboxDetailResponse"
+                    $ref: "#/components/schemas/InboxResponse"
                 required:
                   - data
                 additionalProperties: false
@@ -1393,7 +1439,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.inboxes.retrieve('inboxId_value');
+            const response = await client.inboxes.retrieve('ibx_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1403,7 +1449,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.inboxes().retrieve("inboxId_value");
+            var response = nuntly.inboxes().retrieve("ibx_01kabn43yqyxn2bx4ve84mczd3");
     patch:
       summary: Update Inbox
       description: Update an inbox.
@@ -1449,7 +1495,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.inboxes.update('inboxId_value', { /* ... */ });
+            const response = await client.inboxes.update('ibx_01kabn43yqyxn2bx4ve84mczd3', {});
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1460,7 +1506,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.inboxes().update("inboxId_value", UpdateInboxRequest.builder().build());
+            var response = nuntly.inboxes().update("ibx_01kabn43yqyxn2bx4ve84mczd3", UpdateInboxRequest.builder().build());
   /inboxes/{inboxId}/messages:
     post:
       summary: Send Inbox Message
@@ -1507,7 +1553,12 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.inboxes.messages.send('inboxId_value', { /* ... */ });
+            const response = await client.inboxes.messages.send('ibx_01kabn43yqyxn2bx4ve84mczd3', {
+              to: 'brian67@gmail.com',
+              subject: 'Verify your email address',
+              text: 'Thank you for signing up! Please verify your email address.',
+              html: '<h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>',
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1518,7 +1569,12 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.inboxes().messages().send("inboxId_value", SendMessageRequest.builder().build());
+            var response = nuntly.inboxes().messages().send("ibx_01kabn43yqyxn2bx4ve84mczd3", SendMessageRequest.builder()
+                .to(List.of("brian67@gmail.com"))
+                .subject("Verify your email address")
+                .text("Thank you for signing up! Please verify your email address.")
+                .html("<h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>")
+                .build());
   /inboxes/{inboxId}/threads:
     get:
       summary: List Inbox Threads
@@ -1589,7 +1645,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.inboxes.threads.list('inboxId_value');
+            const response = await client.inboxes.threads.list('ibx_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1599,7 +1655,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.inboxes().threads().list("inboxId_value");
+            var response = nuntly.inboxes().threads().list("ibx_01kabn43yqyxn2bx4ve84mczd3");
   /messages:
     get:
       summary: List Messages
@@ -1723,7 +1779,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.messages.retrieve('messageId_value');
+            const response = await client.messages.retrieve('imsg_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1733,7 +1789,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.messages().retrieve("messageId_value");
+            var response = nuntly.messages().retrieve("imsg_01kabn43yqyxn2bx4ve84mczd3");
     patch:
       summary: Update Message
       description: Update message labels. Only available for messages in user-created inboxes.
@@ -1779,7 +1835,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.messages.update('messageId_value', { /* ... */ });
+            const response = await client.messages.update('imsg_01kabn43yqyxn2bx4ve84mczd3', {});
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1790,7 +1846,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.messages().update("messageId_value", UpdateMessageRequest.builder().build());
+            var response = nuntly.messages().update("imsg_01kabn43yqyxn2bx4ve84mczd3", UpdateMessageRequest.builder().build());
   /messages/{messageId}/attachments:
     get:
       summary: List Message Attachments
@@ -1832,7 +1888,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.messages.attachments.list('messageId_value');
+            const response = await client.messages.attachments.list('imsg_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1842,7 +1898,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.messages().attachments().list("messageId_value");
+            var response = nuntly.messages().attachments().list("imsg_01kabn43yqyxn2bx4ve84mczd3");
   /messages/{messageId}/attachments/{attachmentId}:
     get:
       summary: Retrieve Message Attachment
@@ -1889,7 +1945,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.messages.attachments.retrieve('messageId_value', 'attachmentId_value');
+            const response = await client.messages.attachments.retrieve('imsg_01kabn43yqyxn2bx4ve84mczd3', 'iatt_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1899,7 +1955,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.messages().attachments().retrieve("messageId_value", "attachmentId_value");
+            var response = nuntly.messages().attachments().retrieve("imsg_01kabn43yqyxn2bx4ve84mczd3", "iatt_01kabn43yqyxn2bx4ve84mczd3");
   /messages/{messageId}/content:
     get:
       summary: Retrieve Message Content
@@ -1941,7 +1997,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.messages.content.retrieve('messageId_value');
+            const response = await client.messages.content.retrieve('imsg_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -1951,7 +2007,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.messages().content().retrieve("messageId_value");
+            var response = nuntly.messages().content().retrieve("imsg_01kabn43yqyxn2bx4ve84mczd3");
   /messages/{messageId}/forward:
     post:
       summary: Forward Message
@@ -1999,7 +2055,10 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.messages.forward('messageId_value', { /* ... */ });
+            const response = await client.messages.forward('imsg_01kabn43yqyxn2bx4ve84mczd3', {
+              to: 'brian67@gmail.com',
+              text: 'Thank you for signing up! Please verify your email address.',
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2010,7 +2069,10 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.messages().forward("messageId_value", ForwardMessageRequest.builder().build());
+            var response = nuntly.messages().forward("imsg_01kabn43yqyxn2bx4ve84mczd3", ForwardMessageRequest.builder()
+                .to(List.of("brian67@gmail.com"))
+                .text("Thank you for signing up! Please verify your email address.")
+                .build());
   /messages/{messageId}/reply:
     post:
       summary: Reply To Message
@@ -2058,7 +2120,11 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.messages.reply('messageId_value', { /* ... */ });
+            const response = await client.messages.reply('imsg_01kabn43yqyxn2bx4ve84mczd3', {
+              text: 'Thank you for signing up! Please verify your email address.',
+              html: '<h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>',
+              replyAll: false,
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2069,7 +2135,11 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.messages().reply("messageId_value", ReplyMessageRequest.builder().build());
+            var response = nuntly.messages().reply("imsg_01kabn43yqyxn2bx4ve84mczd3", ReplyMessageRequest.builder()
+                .text("Thank you for signing up! Please verify your email address.")
+                .html("<h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>")
+                .replyAll(false)
+                .build());
   /namespaces:
     post:
       summary: Create Namespace
@@ -2110,7 +2180,9 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.namespaces.create({ /* ... */ });
+            const response = await client.namespaces.create({
+              name: '<name>',
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2121,7 +2193,9 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.namespaces().create(CreateNamespaceRequest.builder().build());
+            var response = nuntly.namespaces().create(CreateNamespaceRequest.builder()
+                .name("<name>")
+                .build());
     get:
       summary: List Namespaces
       description: List all namespaces.
@@ -2233,7 +2307,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.namespaces.delete('namespaceId_value');
+            const response = await client.namespaces.delete('ns_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2243,7 +2317,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.namespaces().delete("namespaceId_value");
+            var response = nuntly.namespaces().delete("ns_01kabn43yqyxn2bx4ve84mczd3");
     get:
       summary: Retrieve Namespace
       description: Retrieve a namespace with inbox stats.
@@ -2284,7 +2358,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.namespaces.retrieve('namespaceId_value');
+            const response = await client.namespaces.retrieve('ns_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2294,7 +2368,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.namespaces().retrieve("namespaceId_value");
+            var response = nuntly.namespaces().retrieve("ns_01kabn43yqyxn2bx4ve84mczd3");
     patch:
       summary: Update Namespace
       description: Update a namespace.
@@ -2340,7 +2414,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.namespaces.update('namespaceId_value', { /* ... */ });
+            const response = await client.namespaces.update('ns_01kabn43yqyxn2bx4ve84mczd3', {});
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2351,7 +2425,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.namespaces().update("namespaceId_value", UpdateNamespaceRequest.builder().build());
+            var response = nuntly.namespaces().update("ns_01kabn43yqyxn2bx4ve84mczd3", UpdateNamespaceRequest.builder().build());
   /namespaces/{namespaceId}/inboxes:
     get:
       summary: List Namespace Inboxes
@@ -2417,7 +2491,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.namespaces.inboxes.list('namespaceId_value');
+            const response = await client.namespaces.inboxes.list('ns_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2427,7 +2501,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.namespaces().inboxes().list("namespaceId_value");
+            var response = nuntly.namespaces().inboxes().list("ns_01kabn43yqyxn2bx4ve84mczd3");
   /organizations:
     get:
       summary: Retrieve Organizations
@@ -2531,7 +2605,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.organizations.retrieve('id_value');
+            const response = await client.organizations.retrieve('org_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2541,7 +2615,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.organizations().retrieve("id_value");
+            var response = nuntly.organizations().retrieve("org_01ka8k8s80gvx9604cn9am5st4");
   /organizations/{id}/usage:
     get:
       summary: Retrieve Organization Usage
@@ -2583,7 +2657,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.organizations.usage.retrieve('id_value');
+            const response = await client.organizations.usage.retrieve('apk_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2593,7 +2667,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.organizations().usage().retrieve("id_value");
+            var response = nuntly.organizations().usage().retrieve("apk_01ka8k8s80gvx9604cn9am5st4");
   /threads/{threadId}:
     get:
       summary: Retrieve Thread
@@ -2635,7 +2709,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.threads.retrieve('threadId_value');
+            const response = await client.threads.retrieve('thr_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2645,7 +2719,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.threads().retrieve("threadId_value");
+            var response = nuntly.threads().retrieve("thr_01kabn43yqyxn2bx4ve84mczd3");
     patch:
       summary: Update Thread
       description: Update thread labels and agent assignment. Label operations apply to all messages in the thread.
@@ -2691,7 +2765,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.threads.update('threadId_value', { /* ... */ });
+            const response = await client.threads.update('thr_01kabn43yqyxn2bx4ve84mczd3', {});
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2702,7 +2776,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.threads().update("threadId_value", UpdateThreadRequest.builder().build());
+            var response = nuntly.threads().update("thr_01kabn43yqyxn2bx4ve84mczd3", UpdateThreadRequest.builder().build());
   /threads/{threadId}/messages:
     get:
       summary: List Thread Messages
@@ -2758,7 +2832,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.threads.messages.list('threadId_value');
+            const response = await client.threads.messages.list('thr_01kabn43yqyxn2bx4ve84mczd3');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2768,7 +2842,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.threads().messages().list("threadId_value");
+            var response = nuntly.threads().messages().list("thr_01kabn43yqyxn2bx4ve84mczd3");
   /webhooks:
     post:
       summary: Create Webhook
@@ -2809,7 +2883,11 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.webhooks.create({ /* ... */ });
+            const response = await client.webhooks.create({
+              name: 'Production webhook',
+              endpointUrl: 'https://example.com/webhooks',
+              events: ['email.queued'],
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2820,7 +2898,11 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.webhooks().create(CreateWebhookRequest.builder().build());
+            var response = nuntly.webhooks().create(CreateWebhookRequest.builder()
+                .name("Production webhook")
+                .endpointUrl("https://example.com/webhooks")
+                .events(List.of(EventType.EMAIL_QUEUED))
+                .build());
     get:
       summary: List Webhooks
       description: Returns all registered webhook endpoints for the organization.
@@ -2923,7 +3005,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.webhooks.delete('id_value');
+            const response = await client.webhooks.delete('wh_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2933,7 +3015,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.webhooks().delete("id_value");
+            var response = nuntly.webhooks().delete("wh_01ka8k8s80gvx9604cn9am5st4");
     get:
       summary: Retrieve Webhook
       description: Returns a webhook endpoint with its URL, subscribed events, and configuration.
@@ -2975,7 +3057,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.webhooks.retrieve('id_value');
+            const response = await client.webhooks.retrieve('wh_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -2985,8 +3067,8 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.webhooks().retrieve("id_value");
-    put:
+            var response = nuntly.webhooks().retrieve("wh_01ka8k8s80gvx9604cn9am5st4");
+    patch:
       summary: Update Webhook
       description: Update the endpoint URL, subscribed event types, or rotate the signing secret.
       operationId: update-webhook
@@ -3005,8 +3087,8 @@ paths:
             schema:
               $ref: "#/components/schemas/UpdateWebhookRequest"
       responses:
-        "202":
-          description: Request accepted.
+        "200":
+          description: Successful response.
           content:
             application/json:
               schema:
@@ -3032,7 +3114,10 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.webhooks.update('id_value', { /* ... */ });
+            const response = await client.webhooks.update('wh_01ka8k8s80gvx9604cn9am5st4', {
+              name: 'Production webhook',
+              events: ['email.queued'],
+            });
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -3043,7 +3128,10 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.webhooks().update("id_value", UpdateWebhookRequest.builder().build());
+            var response = nuntly.webhooks().update("wh_01ka8k8s80gvx9604cn9am5st4", UpdateWebhookRequest.builder()
+                .name("Production webhook")
+                .events(List.of(EventType.EMAIL_QUEUED))
+                .build());
   /webhooks/{id}/events/{eventId}/deliveries:
     get:
       summary: List Webhook Event Deliveries
@@ -3090,7 +3178,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.webhooks.events.deliveries('id_value', 'eventId_value');
+            const response = await client.webhooks.events.deliveries('apk_01ka8k8s80gvx9604cn9am5st4', 'evt_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -3100,7 +3188,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.webhooks().events().deliveries("id_value", "eventId_value");
+            var response = nuntly.webhooks().events().deliveries("apk_01ka8k8s80gvx9604cn9am5st4", "evt_01ka8k8s80gvx9604cn9am5st4");
   /webhooks/{id}/events/{eventId}/replay:
     post:
       summary: Replay Webhook Event
@@ -3137,7 +3225,7 @@ paths:
               apiKey: process.env['NUNTLY_API_KEY'],
             });
 
-            const response = await client.webhooks.events.replay('id_value', 'eventId_value');
+            const response = await client.webhooks.events.replay('apk_01ka8k8s80gvx9604cn9am5st4', 'evt_01ka8k8s80gvx9604cn9am5st4');
         - lang: Java
           source: |-
             import com.nuntly.sdk.Nuntly;
@@ -3147,7 +3235,7 @@ paths:
                 .apiKey(System.getenv("NUNTLY_API_KEY"))
                 .build());
 
-            var response = nuntly.webhooks().events().replay("id_value", "eventId_value");
+            var response = nuntly.webhooks().events().replay("apk_01ka8k8s80gvx9604cn9am5st4", "evt_01ka8k8s80gvx9604cn9am5st4");
   /webhooks/events:
     get:
       summary: List Webhooks Events
@@ -3313,12 +3401,12 @@ components:
           description: The id of the api key
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - apk_01ka8k8s80gvx9604cn9am5st4
         name:
           description: The name of the api key
           type: string
           examples:
-            - example.com
+            - Production
         shortToken:
           description: The last 6 characters of the api key token
           type: string
@@ -3346,12 +3434,12 @@ components:
           description: The id of the api key
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - apk_01ka8k8s80gvx9604cn9am5st4
         name:
           description: The name of the api key
           type: string
           examples:
-            - example.com
+            - Production
         shortToken:
           description: The last 6 characters of the api key token
           type: string
@@ -3375,12 +3463,18 @@ components:
         content:
           description: The base64-encoded content of the attachment
           type: string
+          examples:
+            - SGVsbG8gV29ybGQ=
         filename:
           description: The name of the attached file to be displayed to the recipient
           type: string
+          examples:
+            - invoice.pdf
         contentType:
           description: Content type of the attachment (the MIME type)
           type: string
+          examples:
+            - application/pdf
     AttachmentResponse:
       type: object
       required:
@@ -3395,7 +3489,7 @@ components:
           description: The id of the attachment
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - iatt_01kabn43yqyxn2bx4ve84mczd3
         filename:
           description: The original filename.
           type: string
@@ -3421,6 +3515,55 @@ components:
       type: array
       items:
         $ref: "#/components/schemas/AttachmentResponse"
+    BounceDetail:
+      type: object
+      required:
+        - bounceType
+        - bounceSubType
+        - bouncedRecipients
+        - bouncedAt
+        - feedbackId
+      properties:
+        bounceType:
+          type: string
+          enum:
+            - Permanent
+            - Undetermined
+            - Transient
+        bounceSubType:
+          type: string
+          enum:
+            - Undetermined
+            - General
+            - NoEmail
+            - Suppressed
+            - OnAccountSuppressionList
+            - MailboxFull
+            - MessageTooLarge
+            - CustomTimeoutExceeded
+            - ContentRejected
+            - AttachmentRejected
+        bouncedRecipients:
+          type: array
+          items:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+              action:
+                type: string
+              status:
+                type: string
+              diagnosticCode:
+                type: string
+        bouncedAt:
+          type: string
+        feedbackId:
+          type: string
+        reportingMta:
+          type: string
     BulkEmailsResponse:
       type: object
       required:
@@ -3445,6 +3588,55 @@ components:
                 $ref: '#/components/schemas/EmailStatus'
               detail:
                 type: string
+    ClickDetail:
+      type: object
+      required:
+        - clickedAt
+        - userAgent
+        - link
+      properties:
+        clickedAt:
+          type: string
+        userAgent:
+          type: string
+        link:
+          type: string
+    ComplaintDetail:
+      type: object
+      required:
+        - complainedAt
+        - feedbackId
+      properties:
+        complainedAt:
+          type: string
+        complainedRecipients:
+          type: array
+          items:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+        complaintSubType:
+          type: string
+          enum:
+            - OnAccountSuppressionList
+        complaintFeedbackType:
+          type: string
+          enum:
+            - abuse
+            - auth-failure
+            - fraud
+            - not-spam
+            - other
+            - virus
+        feedbackId:
+          type: string
+        userAgent:
+          type: string
+        receivedAt:
+          type: string
     CreateApiKeyRequest:
       type: object
       required:
@@ -3454,7 +3646,7 @@ components:
           description: The name of the api key
           type: string
           examples:
-            - example.com
+            - Production
         status:
           description: The status for the api key
           type: string
@@ -3485,12 +3677,12 @@ components:
           description: The id of the api key
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - apk_01ka8k8s80gvx9604cn9am5st4
         name:
           description: The name of the api key
           type: string
           examples:
-            - example.com
+            - Production
         apiKey:
           description: The content of the api key
           type: string
@@ -3644,124 +3836,6 @@ components:
         receiving:
           description: Enable receiving
           type: boolean
-    CreateDomainResponse:
-      type: object
-      required:
-        - id
-        - name
-        - createdAt
-        - status
-        - region
-        - statusAt
-        - sending
-        - receiving
-        - sendingStatus
-        - sendingStatusAt
-        - receivingStatus
-        - receivingStatusAt
-        - openTracking
-        - clickTracking
-        - records
-      properties:
-        id:
-          description: The id of the domain
-          type: string
-          examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
-        name:
-          description: The name of the domain to send e-mails'
-          type: string
-          examples:
-            - example.com
-        createdAt:
-          description: Date at which the object was created (ISO 8601 format)
-          type: string
-          examples:
-            - "2026-03-29T12:00:00.000Z"
-        status:
-          description: The status for the domain
-          $ref: '#/components/schemas/DomainStatus'
-        region:
-          description: The region of the domain data
-          type: string
-          enum:
-            - eu-west-1
-        statusAt:
-          description: The date of the lastest verification of this record
-          type: string
-        sending:
-          description: Whether sending is enabled for the domain
-          type: boolean
-        receiving:
-          description: Whether receiving is enabled for the domain
-          type: boolean
-        sendingStatus:
-          description: The sending status for the domain
-          type: string
-          enum:
-            - enabled
-            - disabled
-            - paused
-        sendingStatusAt:
-          description: The date of the latest sending status change
-          type: string
-        receivingStatus:
-          description: The receiving status for the domain
-          $ref: '#/components/schemas/DomainStatus'
-        receivingStatusAt:
-          description: The date of the latest receiving status change
-          type: string
-        openTracking:
-          description: Emit an event for each recipient opens an email their email client
-          type: boolean
-        clickTracking:
-          description: Emit an event for each time the recipient clicks a link in the email
-          type: boolean
-        records:
-          description: The DNS records for your domain.
-          type: array
-          items:
-            type: object
-            required:
-              - name
-              - fullname
-              - recordType
-              - ttl
-              - group
-              - value
-              - status
-              - statusAt
-            properties:
-              name:
-                type: string
-              fullname:
-                type: string
-              recordType:
-                type: string
-                enum:
-                  - TXT
-                  - MX
-                  - CNAME
-              ttl:
-                type: string
-              group:
-                type: string
-                enum:
-                  - DKIM
-                  - SPF
-                  - MX
-                  - DMARC
-                  - MX_RECEIVING
-              selector:
-                type: string
-              priority:
-                type: string
-              value:
-                type: string
-              status:
-                $ref: '#/components/schemas/DomainStatus'
-              statusAt:
-                type: string
     CreateEmailRequest:
       type: object
       required:
@@ -3783,6 +3857,8 @@ components:
             - type: string
           examples:
             - brian67@gmail.com
+            - - carlo43@gmail.com
+              - pink42@yahoo.com
         cc:
           description: The carbon copy recipient(s) of the email
           anyOf:
@@ -3824,7 +3900,7 @@ components:
           description: The HTML version of the email
           type: string
           examples:
-            - <h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>
+            - <h1>Welcome 🎉</h1><p>Thank you for signing up! Please verify your email address.</p>
         headers:
           description: The headers to add to the email
           type: object
@@ -3876,8 +3952,6 @@ components:
         name:
           description: The display name of the inbox.
           type: string
-          examples:
-            - example.com
         namespaceId:
           description: The id of the namespace to assign the inbox to.
           type: string
@@ -3892,8 +3966,6 @@ components:
         name:
           description: The display name of the namespace.
           type: string
-          examples:
-            - example.com
         externalId:
           description: An optional external identifier for the namespace.
           type: string
@@ -3907,7 +3979,7 @@ components:
           description: The name of the webhook
           type: string
           examples:
-            - example.com
+            - Production webhook
         endpointUrl:
           description: The endpoint URL of the webhook
           type: string
@@ -3938,12 +4010,12 @@ components:
           description: The id of the webhook
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - wh_01ka8k8s80gvx9604cn9am5st4
         name:
           description: The name of the webhook
           type: string
           examples:
-            - example.com
+            - Production webhook
         endpointUrl:
           description: The endpoint URL of the webhook
           type: string
@@ -3978,7 +4050,7 @@ components:
           description: The id of the api key
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - apk_01ka8k8s80gvx9604cn9am5st4
     DeleteDomainResponse:
       type: object
       required:
@@ -3988,7 +4060,7 @@ components:
           description: The id of the domain
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - dns_01kabn43yqyxn2bx4ve84mczd3
     DeleteEmailResponse:
       type: object
       required:
@@ -4012,7 +4084,71 @@ components:
           description: The id of the webhook
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - wh_01ka8k8s80gvx9604cn9am5st4
+    DeliveryDelayDetail:
+      type: object
+      required:
+        - delayedAt
+        - delayType
+        - delayedRecipients
+        - deliveryStoppedAt
+        - reportingMta
+      properties:
+        delayedAt:
+          type: string
+        delayType:
+          type: string
+          enum:
+            - InternalFailure
+            - General
+            - MailboxFull
+            - SpamDetected
+            - RecipientServerError
+            - IPFailure
+            - TransientCommunicationFailure
+            - BYOIPHostNameLookupUnavailable
+            - Undetermined
+            - SendingDeferral
+        delayedRecipients:
+          type: array
+          items:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+              status:
+                type: string
+              diagnosticCode:
+                type: string
+        deliveryStoppedAt:
+          type: string
+        reportingMta:
+          type: string
+    DeliveryDetail:
+      type: object
+      required:
+        - deliveredAt
+        - recipients
+        - smtpResponse
+        - remoteMtaIp
+        - reportingMta
+      properties:
+        deliveredAt:
+          type: string
+        recipients:
+          type: array
+          items:
+            type: string
+        smtpResponse:
+          type: string
+        remoteMtaIp:
+          type: string
+        reportingMta:
+          type: string
+        processingTime:
+          type: number
     DomainRecordsResponse:
       type: object
       required:
@@ -4036,7 +4172,7 @@ components:
           description: The id of the domain
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - dns_01kabn43yqyxn2bx4ve84mczd3
         name:
           description: The name of the domain to send e-mails'
           type: string
@@ -4083,9 +4219,13 @@ components:
         openTracking:
           description: Emit an event for each recipient opens an email their email client
           type: boolean
+          examples:
+            - true
         clickTracking:
           description: Emit an event for each time the recipient clicks a link in the email
           type: boolean
+          examples:
+            - true
         records:
           description: The DNS records for your domain.
           type: array
@@ -4146,7 +4286,7 @@ components:
           description: The id of the domain
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - dns_01kabn43yqyxn2bx4ve84mczd3
         name:
           description: The name of the domain to send e-mails'
           type: string
@@ -4184,6 +4324,7 @@ components:
         - failed
         - temporary_failure
     EmailBouncedEvent:
+      title: email.bounced
       type: object
       required:
         - id
@@ -4204,129 +4345,16 @@ components:
           enum:
             - email.bounced
         data:
-          type: object
-          required:
-            - id
-            - orgId
-            - messageId
-            - sentAt
-            - enqueuedAt
-            - domainName
-            - domainId
-            - from
-            - to
-            - subject
-            - bounce
-          properties:
-            id:
-              type: string
-            orgId:
-              type: string
-            bulkId:
-              type: string
-            messageId:
-              type: string
-            sentAt:
-              type: string
-            enqueuedAt:
-              type: string
-            domainName:
-              type: string
-            domainId:
-              type: string
-            from:
-              type: string
-            to:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            cc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            bcc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            replyTo:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            subject:
-              type: string
-            headers:
-              type: array
-              items:
-                type: object
-                required:
-                  - name
-                  - value
-                properties:
-                  name:
-                    type: string
-                  value:
-                    type: string
-            tags:
-              type: object
-              additionalProperties: true
-            bounce:
-              type: object
+          allOf:
+            - $ref: '#/components/schemas/EmailEvent'
+            - type: object
               required:
-                - bounceType
-                - bounceSubType
-                - bouncedRecipients
-                - bouncedAt
-                - feedbackId
+                - bounce
               properties:
-                bounceType:
-                  type: string
-                  enum:
-                    - Permanent
-                    - Undetermined
-                    - Transient
-                bounceSubType:
-                  type: string
-                  enum:
-                    - Undetermined
-                    - General
-                    - NoEmail
-                    - Suppressed
-                    - OnAccountSuppressionList
-                    - MailboxFull
-                    - MessageTooLarge
-                    - CustomTimeoutExceeded
-                    - ContentRejected
-                    - AttachmentRejected
-                bouncedRecipients:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - email
-                    properties:
-                      email:
-                        type: string
-                      action:
-                        type: string
-                      status:
-                        type: string
-                      diagnosticCode:
-                        type: string
-                bouncedAt:
-                  type: string
-                feedbackId:
-                  type: string
-                reportingMta:
-                  type: string
+                bounce:
+                  $ref: '#/components/schemas/BounceDetail'
     EmailClickedEvent:
+      title: email.clicked
       type: object
       required:
         - id
@@ -4347,93 +4375,16 @@ components:
           enum:
             - email.clicked
         data:
-          type: object
-          required:
-            - id
-            - orgId
-            - messageId
-            - sentAt
-            - enqueuedAt
-            - domainName
-            - domainId
-            - from
-            - to
-            - subject
-            - click
-          properties:
-            id:
-              type: string
-            orgId:
-              type: string
-            bulkId:
-              type: string
-            messageId:
-              type: string
-            sentAt:
-              type: string
-            enqueuedAt:
-              type: string
-            domainName:
-              type: string
-            domainId:
-              type: string
-            from:
-              type: string
-            to:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            cc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            bcc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            replyTo:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            subject:
-              type: string
-            headers:
-              type: array
-              items:
-                type: object
-                required:
-                  - name
-                  - value
-                properties:
-                  name:
-                    type: string
-                  value:
-                    type: string
-            tags:
-              type: object
-              additionalProperties: true
-            click:
-              type: object
+          allOf:
+            - $ref: '#/components/schemas/EmailEvent'
+            - type: object
               required:
-                - clickedAt
-                - userAgent
-                - link
+                - click
               properties:
-                clickedAt:
-                  type: string
-                userAgent:
-                  type: string
-                link:
-                  type: string
+                click:
+                  $ref: '#/components/schemas/ClickDetail'
     EmailComplainedEvent:
+      title: email.complained
       type: object
       required:
         - id
@@ -4454,115 +4405,14 @@ components:
           enum:
             - email.complained
         data:
-          type: object
-          required:
-            - id
-            - orgId
-            - messageId
-            - sentAt
-            - enqueuedAt
-            - domainName
-            - domainId
-            - from
-            - to
-            - subject
-            - complaint
-          properties:
-            id:
-              type: string
-            orgId:
-              type: string
-            bulkId:
-              type: string
-            messageId:
-              type: string
-            sentAt:
-              type: string
-            enqueuedAt:
-              type: string
-            domainName:
-              type: string
-            domainId:
-              type: string
-            from:
-              type: string
-            to:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            cc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            bcc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            replyTo:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            subject:
-              type: string
-            headers:
-              type: array
-              items:
-                type: object
-                required:
-                  - name
-                  - value
-                properties:
-                  name:
-                    type: string
-                  value:
-                    type: string
-            tags:
-              type: object
-              additionalProperties: true
-            complaint:
-              type: object
+          allOf:
+            - $ref: '#/components/schemas/EmailEvent'
+            - type: object
               required:
-                - complainedAt
-                - feedbackId
+                - complaint
               properties:
-                complainedAt:
-                  type: string
-                complainedRecipients:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - email
-                    properties:
-                      email:
-                        type: string
-                complaintSubType:
-                  type: string
-                  enum:
-                    - OnAccountSuppressionList
-                complaintFeedbackType:
-                  type: string
-                  enum:
-                    - abuse
-                    - auth-failure
-                    - fraud
-                    - not-spam
-                    - other
-                    - virus
-                feedbackId:
-                  type: string
-                userAgent:
-                  type: string
-                receivedAt:
-                  type: string
+                complaint:
+                  $ref: '#/components/schemas/ComplaintDetail'
     EmailContentItem:
       type: object
       required:
@@ -4619,6 +4469,7 @@ components:
           $ref: '#/components/schemas/EmailContentItem'
           nullable: true
     EmailDeliveredEvent:
+      title: email.delivered
       type: object
       required:
         - id
@@ -4639,103 +4490,16 @@ components:
           enum:
             - email.delivered
         data:
-          type: object
-          required:
-            - id
-            - orgId
-            - messageId
-            - sentAt
-            - enqueuedAt
-            - domainName
-            - domainId
-            - from
-            - to
-            - subject
-            - delivery
-          properties:
-            id:
-              type: string
-            orgId:
-              type: string
-            bulkId:
-              type: string
-            messageId:
-              type: string
-            sentAt:
-              type: string
-            enqueuedAt:
-              type: string
-            domainName:
-              type: string
-            domainId:
-              type: string
-            from:
-              type: string
-            to:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            cc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            bcc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            replyTo:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            subject:
-              type: string
-            headers:
-              type: array
-              items:
-                type: object
-                required:
-                  - name
-                  - value
-                properties:
-                  name:
-                    type: string
-                  value:
-                    type: string
-            tags:
-              type: object
-              additionalProperties: true
-            delivery:
-              type: object
+          allOf:
+            - $ref: '#/components/schemas/EmailEvent'
+            - type: object
               required:
-                - deliveredAt
-                - recipients
-                - smtpResponse
-                - remoteMtaIp
-                - reportingMta
+                - delivery
               properties:
-                deliveredAt:
-                  type: string
-                recipients:
-                  type: array
-                  items:
-                    type: string
-                smtpResponse:
-                  type: string
-                remoteMtaIp:
-                  type: string
-                reportingMta:
-                  type: string
-                processingTime:
-                  type: number
+                delivery:
+                  $ref: '#/components/schemas/DeliveryDetail'
     EmailDeliveryDelayedEvent:
+      title: email.deliveryDelayed
       type: object
       required:
         - id
@@ -4756,120 +4520,105 @@ components:
           enum:
             - email.deliveryDelayed
         data:
-          type: object
-          required:
-            - id
-            - orgId
-            - messageId
-            - sentAt
-            - enqueuedAt
-            - domainName
-            - domainId
-            - from
-            - to
-            - subject
-            - deliveryDelay
-          properties:
-            id:
-              type: string
-            orgId:
-              type: string
-            bulkId:
-              type: string
-            messageId:
-              type: string
-            sentAt:
-              type: string
-            enqueuedAt:
-              type: string
-            domainName:
-              type: string
-            domainId:
-              type: string
-            from:
-              type: string
-            to:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            cc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            bcc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            replyTo:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            subject:
-              type: string
-            headers:
-              type: array
-              items:
-                type: object
-                required:
-                  - name
-                  - value
-                properties:
-                  name:
-                    type: string
-                  value:
-                    type: string
-            tags:
-              type: object
-              additionalProperties: true
-            deliveryDelay:
-              type: object
+          allOf:
+            - $ref: '#/components/schemas/EmailEvent'
+            - type: object
               required:
-                - delayedAt
-                - delayType
-                - delayedRecipients
-                - deliveryStoppedAt
-                - reportingMta
+                - deliveryDelay
               properties:
-                delayedAt:
-                  type: string
-                delayType:
-                  type: string
-                  enum:
-                    - InternalFailure
-                    - General
-                    - MailboxFull
-                    - SpamDetected
-                    - RecipientServerError
-                    - IPFailure
-                    - TransientCommunicationFailure
-                    - BYOIPHostNameLookupUnavailable
-                    - Undetermined
-                    - SendingDeferral
-                delayedRecipients:
-                  type: array
-                  items:
-                    type: object
-                    required:
-                      - email
-                    properties:
-                      email:
-                        type: string
-                      status:
-                        type: string
-                      diagnosticCode:
-                        type: string
-                deliveryStoppedAt:
-                  type: string
-                reportingMta:
-                  type: string
+                deliveryDelay:
+                  $ref: '#/components/schemas/DeliveryDelayDetail'
+    EmailEvent:
+      type: object
+      required:
+        - id
+        - orgId
+        - messageId
+        - sentAt
+        - enqueuedAt
+        - domainName
+        - domainId
+        - from
+        - to
+        - subject
+      properties:
+        id:
+          type: string
+          examples:
+            - em_01ka8k8s80gvx9604cn9am5st4
+        orgId:
+          type: string
+          examples:
+            - org_01ka8k8s80gvx9604cn9am5st4
+        bulkId:
+          type: string
+        messageId:
+          type: string
+          examples:
+            - msg_01ka8k8s80gvx9604cn9am5st4
+        sentAt:
+          type: string
+        enqueuedAt:
+          type: string
+        domainName:
+          type: string
+        domainId:
+          type: string
+        from:
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        to:
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - brian67@gmail.com
+        cc:
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - carlo43@gmail.com
+        bcc:
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - archive@company.com
+        replyTo:
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - support@company.com
+        subject:
+          type: string
+          examples:
+            - Verify your email address
+        headers:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - value
+            properties:
+              name:
+                type: string
+              value:
+                type: string
+        tags:
+          type: object
+          additionalProperties: true
     EmailEventsResponse:
       type: array
       items:
@@ -4887,7 +4636,7 @@ components:
         id:
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - evt_01ka8k8s80gvx9604cn9am5st4
         orgId:
           description: The id of the organization
           type: string
@@ -4913,6 +4662,7 @@ components:
           type: object
           additionalProperties: true
     EmailFailedEvent:
+      title: email.failed
       type: object
       required:
         - id
@@ -4933,88 +4683,16 @@ components:
           enum:
             - email.failed
         data:
-          type: object
-          required:
-            - id
-            - orgId
-            - messageId
-            - sentAt
-            - enqueuedAt
-            - domainName
-            - domainId
-            - from
-            - to
-            - subject
-            - failure
-          properties:
-            id:
-              type: string
-            orgId:
-              type: string
-            bulkId:
-              type: string
-            messageId:
-              type: string
-            sentAt:
-              type: string
-            enqueuedAt:
-              type: string
-            domainName:
-              type: string
-            domainId:
-              type: string
-            from:
-              type: string
-            to:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            cc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            bcc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            replyTo:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            subject:
-              type: string
-            headers:
-              type: array
-              items:
-                type: object
-                required:
-                  - name
-                  - value
-                properties:
-                  name:
-                    type: string
-                  value:
-                    type: string
-            tags:
-              type: object
-              additionalProperties: true
-            failure:
-              type: object
+          allOf:
+            - $ref: '#/components/schemas/EmailEvent'
+            - type: object
               required:
-                - error
+                - failure
               properties:
-                error:
-                  type: object
-                  additionalProperties: true
+                failure:
+                  $ref: '#/components/schemas/FailureDetail'
     EmailOpenedEvent:
+      title: email.opened
       type: object
       required:
         - id
@@ -5035,90 +4713,16 @@ components:
           enum:
             - email.opened
         data:
-          type: object
-          required:
-            - id
-            - orgId
-            - messageId
-            - sentAt
-            - enqueuedAt
-            - domainName
-            - domainId
-            - from
-            - to
-            - subject
-            - open
-          properties:
-            id:
-              type: string
-            orgId:
-              type: string
-            bulkId:
-              type: string
-            messageId:
-              type: string
-            sentAt:
-              type: string
-            enqueuedAt:
-              type: string
-            domainName:
-              type: string
-            domainId:
-              type: string
-            from:
-              type: string
-            to:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            cc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            bcc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            replyTo:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            subject:
-              type: string
-            headers:
-              type: array
-              items:
-                type: object
-                required:
-                  - name
-                  - value
-                properties:
-                  name:
-                    type: string
-                  value:
-                    type: string
-            tags:
-              type: object
-              additionalProperties: true
-            open:
-              type: object
+          allOf:
+            - $ref: '#/components/schemas/EmailEvent'
+            - type: object
               required:
-                - openedAt
-                - userAgent
+                - open
               properties:
-                openedAt:
-                  type: string
-                userAgent:
-                  type: string
+                open:
+                  $ref: '#/components/schemas/OpenDetail'
     EmailProcessedEvent:
+      title: email.processed
       type: object
       required:
         - id
@@ -5147,6 +4751,7 @@ components:
               type: object
               additionalProperties: true
     EmailQueuedEvent:
+      title: email.queued
       type: object
       required:
         - id
@@ -5175,6 +4780,7 @@ components:
               type: object
               additionalProperties: true
     EmailRejectedEvent:
+      title: email.rejected
       type: object
       required:
         - id
@@ -5259,12 +4865,7 @@ components:
               type: object
               additionalProperties: true
             reject:
-              type: object
-              required:
-                - reason
-              properties:
-                reason:
-                  type: string
+              $ref: '#/components/schemas/RejectDetail'
     EmailResponse:
       type: object
       required:
@@ -5308,6 +4909,8 @@ components:
             - type: string
           examples:
             - brian67@gmail.com
+            - - carlo43@gmail.com
+              - pink42@yahoo.com
         cc:
           description: The carbon copy recipient(s) of the email
           anyOf:
@@ -5383,6 +4986,7 @@ components:
           examples:
             - "2026-03-29T12:00:00.000Z"
     EmailScheduledEvent:
+      title: email.scheduled
       type: object
       required:
         - id
@@ -5415,6 +5019,7 @@ components:
                 scheduledAt:
                   type: string
     EmailSendingEvent:
+      title: email.sending
       type: object
       required:
         - id
@@ -5435,83 +5040,17 @@ components:
           enum:
             - email.sending
         data:
-          type: object
-          required:
-            - id
-            - orgId
-            - messageId
-            - sentAt
-            - enqueuedAt
-            - domainName
-            - domainId
-            - from
-            - to
-            - subject
-            - sending
-          properties:
-            id:
-              type: string
-            orgId:
-              type: string
-            bulkId:
-              type: string
-            messageId:
-              type: string
-            sentAt:
-              type: string
-            enqueuedAt:
-              type: string
-            domainName:
-              type: string
-            domainId:
-              type: string
-            from:
-              type: string
-            to:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            cc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            bcc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            replyTo:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            subject:
-              type: string
-            headers:
-              type: array
-              items:
-                type: object
-                required:
-                  - name
-                  - value
-                properties:
-                  name:
-                    type: string
-                  value:
-                    type: string
-            tags:
-              type: object
-              additionalProperties: true
-            sending:
-              type: object
-              additionalProperties: true
+          allOf:
+            - $ref: '#/components/schemas/EmailEvent'
+            - type: object
+              required:
+                - sending
+              properties:
+                sending:
+                  type: object
+                  additionalProperties: true
     EmailSentEvent:
+      title: email.sent
       type: object
       required:
         - id
@@ -5532,82 +5071,15 @@ components:
           enum:
             - email.sent
         data:
-          type: object
-          required:
-            - id
-            - orgId
-            - messageId
-            - sentAt
-            - enqueuedAt
-            - domainName
-            - domainId
-            - from
-            - to
-            - subject
-            - send
-          properties:
-            id:
-              type: string
-            orgId:
-              type: string
-            bulkId:
-              type: string
-            messageId:
-              type: string
-            sentAt:
-              type: string
-            enqueuedAt:
-              type: string
-            domainName:
-              type: string
-            domainId:
-              type: string
-            from:
-              type: string
-            to:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            cc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            bcc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            replyTo:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            subject:
-              type: string
-            headers:
-              type: array
-              items:
-                type: object
-                required:
-                  - name
-                  - value
-                properties:
-                  name:
-                    type: string
-                  value:
-                    type: string
-            tags:
-              type: object
-              additionalProperties: true
-            send:
-              type: object
-              additionalProperties: true
+          allOf:
+            - $ref: '#/components/schemas/EmailEvent'
+            - type: object
+              required:
+                - send
+              properties:
+                send:
+                  type: object
+                  additionalProperties: true
     EmailsResponseItem:
       type: object
       required:
@@ -5637,6 +5109,8 @@ components:
             - type: string
           examples:
             - brian67@gmail.com
+            - - carlo43@gmail.com
+              - pink42@yahoo.com
         subject:
           description: The subject of the e-mail
           type: string
@@ -5790,6 +5264,27 @@ components:
         - $ref: "#/components/schemas/MessageAgentTriggeredEvent"
         - $ref: "#/components/schemas/MessageSentEvent"
         - $ref: "#/components/schemas/MessageRejectedEvent"
+      discriminator:
+        propertyName: type
+        mapping:
+          "email.bounced": "#/components/schemas/EmailBouncedEvent"
+          "email.clicked": "#/components/schemas/EmailClickedEvent"
+          "email.complained": "#/components/schemas/EmailComplainedEvent"
+          "email.delivered": "#/components/schemas/EmailDeliveredEvent"
+          "email.deliveryDelayed": "#/components/schemas/EmailDeliveryDelayedEvent"
+          "email.failed": "#/components/schemas/EmailFailedEvent"
+          "email.opened": "#/components/schemas/EmailOpenedEvent"
+          "email.processed": "#/components/schemas/EmailProcessedEvent"
+          "email.queued": "#/components/schemas/EmailQueuedEvent"
+          "email.rejected": "#/components/schemas/EmailRejectedEvent"
+          "email.scheduled": "#/components/schemas/EmailScheduledEvent"
+          "email.sending": "#/components/schemas/EmailSendingEvent"
+          "email.sent": "#/components/schemas/EmailSentEvent"
+          "message.agent.triggered": "#/components/schemas/MessageAgentTriggeredEvent"
+          "message.received": "#/components/schemas/MessageReceivedEvent"
+          "message.rejected": "#/components/schemas/MessageRejectedEvent"
+          "message.security.flagged": "#/components/schemas/MessageSecurityFlaggedEvent"
+          "message.sent": "#/components/schemas/MessageSentEvent"
     EventType:
       type: string
       enum:
@@ -5814,6 +5309,14 @@ components:
         - message.agent.triggered
         - message.sent
         - message.rejected
+    FailureDetail:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          additionalProperties: true
     ForwardMessageRequest:
       type: object
       required:
@@ -5841,59 +5344,46 @@ components:
           type: string
           examples:
             - em_01ka8k8s80gvx9604cn9am5st4
-    InboxDetailResponse:
+    InboundEventData:
       type: object
       required:
-        - id
-        - createdAt
+        - orgId
         - domainId
         - domainName
-        - address
-        - name
-        - namespaceId
-        - namespaceName
-        - agentId
+        - inboxId
+        - threadId
+        - messageId
+        - from
+        - subject
       properties:
-        id:
-          description: The id of the inbox
+        orgId:
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
-        createdAt:
-          description: Date at which the object was created (ISO 8601 format)
-          type: string
-          examples:
-            - "2026-03-29T12:00:00.000Z"
-        updatedAt:
-          description: Date at which the object was updated (ISO 8601 format)
-          type: string
+            - org_01ka8k8s80gvx9604cn9am5st4
         domainId:
-          description: The id of the domain.
           type: string
         domainName:
-          description: The domain name.
           type: string
-        address:
-          description: The local-part of the email address.
+        inboxId:
           type: string
-        name:
-          description: The display name of the inbox.
-          type: string
-          nullable: true
           examples:
-            - example.com
-        namespaceId:
-          description: The id of the namespace.
+            - ibx_01ka8k8s80gvx9604cn9am5st4
+        threadId:
           type: string
-          nullable: true
-        namespaceName:
-          description: The display name of the namespace.
+        messageId:
           type: string
-          nullable: true
+          examples:
+            - msg_01ka8k8s80gvx9604cn9am5st4
+        from:
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        subject:
+          type: string
+          examples:
+            - Verify your email address
         agentId:
-          description: The AI agent identifier.
           type: string
-          nullable: true
     InboxesQuery:
       type: object
       properties:
@@ -5923,7 +5413,7 @@ components:
           description: The id of the inbox
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - ibx_01kabn43yqyxn2bx4ve84mczd3
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -5945,8 +5435,6 @@ components:
           description: The display name of the inbox.
           type: string
           nullable: true
-          examples:
-            - example.com
         namespaceId:
           description: The id of the namespace.
           type: string
@@ -5976,7 +5464,7 @@ components:
           description: The id of the inbox
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - ibx_01kabn43yqyxn2bx4ve84mczd3
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -5998,8 +5486,6 @@ components:
           description: The display name of the inbox.
           type: string
           nullable: true
-          examples:
-            - example.com
         namespaceId:
           description: The id of the namespace.
           type: string
@@ -6013,6 +5499,7 @@ components:
           type: string
           nullable: true
     MessageAgentTriggeredEvent:
+      title: message.agent.triggered
       type: object
       required:
         - id
@@ -6033,35 +5520,7 @@ components:
           enum:
             - message.agent.triggered
         data:
-          type: object
-          required:
-            - orgId
-            - domainId
-            - domainName
-            - inboxId
-            - threadId
-            - messageId
-            - from
-            - subject
-          properties:
-            orgId:
-              type: string
-            domainId:
-              type: string
-            domainName:
-              type: string
-            inboxId:
-              type: string
-            threadId:
-              type: string
-            messageId:
-              type: string
-            from:
-              type: string
-            subject:
-              type: string
-            agentId:
-              type: string
+          $ref: '#/components/schemas/InboundEventData'
     MessageContent:
       type: object
       required:
@@ -6103,6 +5562,7 @@ components:
           description: When the URL expires.
           type: string
     MessageReceivedEvent:
+      title: message.received
       type: object
       required:
         - id
@@ -6123,36 +5583,9 @@ components:
           enum:
             - message.received
         data:
-          type: object
-          required:
-            - orgId
-            - domainId
-            - domainName
-            - inboxId
-            - threadId
-            - messageId
-            - from
-            - subject
-          properties:
-            orgId:
-              type: string
-            domainId:
-              type: string
-            domainName:
-              type: string
-            inboxId:
-              type: string
-            threadId:
-              type: string
-            messageId:
-              type: string
-            from:
-              type: string
-            subject:
-              type: string
-            agentId:
-              type: string
+          $ref: '#/components/schemas/InboundEventData'
     MessageRejectedEvent:
+      title: message.rejected
       type: object
       required:
         - id
@@ -6173,33 +5606,43 @@ components:
           enum:
             - message.rejected
         data:
-          type: object
-          required:
-            - orgId
-            - domainId
-            - domainName
-            - inboxId
-            - from
-            - subject
-            - reason
-          properties:
-            orgId:
-              type: string
-            domainId:
-              type: string
-            domainName:
-              type: string
-            inboxId:
-              type: string
-            from:
-              type: string
-            subject:
-              type: string
-            reason:
-              type: string
-              enum:
-                - inbox_storage_limit_exceeded
-                - message_too_large
+          $ref: '#/components/schemas/MessageRejectedEventData'
+    MessageRejectedEventData:
+      type: object
+      required:
+        - orgId
+        - domainId
+        - domainName
+        - inboxId
+        - from
+        - subject
+        - reason
+      properties:
+        orgId:
+          type: string
+          examples:
+            - org_01ka8k8s80gvx9604cn9am5st4
+        domainId:
+          type: string
+        domainName:
+          type: string
+        inboxId:
+          type: string
+          examples:
+            - ibx_01ka8k8s80gvx9604cn9am5st4
+        from:
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        subject:
+          type: string
+          examples:
+            - Verify your email address
+        reason:
+          type: string
+          enum:
+            - inbox_storage_limit_exceeded
+            - message_too_large
     MessageResponse:
       type: object
       required:
@@ -6224,7 +5667,7 @@ components:
           description: The id of the message
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - imsg_01kabn43yqyxn2bx4ve84mczd3
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -6310,6 +5753,7 @@ components:
           additionalProperties: true
           nullable: true
     MessageSecurityFlaggedEvent:
+      title: message.security.flagged
       type: object
       required:
         - id
@@ -6330,36 +5774,9 @@ components:
           enum:
             - message.security.flagged
         data:
-          type: object
-          required:
-            - orgId
-            - domainId
-            - domainName
-            - inboxId
-            - threadId
-            - messageId
-            - from
-            - subject
-          properties:
-            orgId:
-              type: string
-            domainId:
-              type: string
-            domainName:
-              type: string
-            inboxId:
-              type: string
-            threadId:
-              type: string
-            messageId:
-              type: string
-            from:
-              type: string
-            subject:
-              type: string
-            agentId:
-              type: string
+          $ref: '#/components/schemas/InboundEventData'
     MessageSentEvent:
+      title: message.sent
       type: object
       required:
         - id
@@ -6380,35 +5797,7 @@ components:
           enum:
             - message.sent
         data:
-          type: object
-          required:
-            - orgId
-            - domainId
-            - domainName
-            - inboxId
-            - threadId
-            - messageId
-            - from
-            - subject
-          properties:
-            orgId:
-              type: string
-            domainId:
-              type: string
-            domainName:
-              type: string
-            inboxId:
-              type: string
-            threadId:
-              type: string
-            messageId:
-              type: string
-            from:
-              type: string
-            subject:
-              type: string
-            agentId:
-              type: string
+          $ref: '#/components/schemas/InboundEventData'
     MessagesQuery:
       type: object
       properties:
@@ -6449,7 +5838,7 @@ components:
           description: The id of the message
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - imsg_01kabn43yqyxn2bx4ve84mczd3
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -6543,7 +5932,7 @@ components:
           description: The id of the namespace
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - ns_01kabn43yqyxn2bx4ve84mczd3
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -6555,8 +5944,6 @@ components:
         name:
           description: The display name of the namespace.
           type: string
-          examples:
-            - example.com
         externalId:
           description: The external identifier for the namespace.
           type: string
@@ -6588,7 +5975,7 @@ components:
           description: The id of the namespace
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - ns_01kabn43yqyxn2bx4ve84mczd3
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -6600,8 +5987,6 @@ components:
         name:
           description: The display name of the namespace.
           type: string
-          examples:
-            - example.com
         externalId:
           description: The external identifier for the namespace.
           type: string
@@ -6627,7 +6012,7 @@ components:
           description: The id of the namespace
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - ns_01kabn43yqyxn2bx4ve84mczd3
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -6639,12 +6024,20 @@ components:
         name:
           description: The display name of the namespace.
           type: string
-          examples:
-            - example.com
         externalId:
           description: The external identifier for the namespace.
           type: string
           nullable: true
+    OpenDetail:
+      type: object
+      required:
+        - openedAt
+        - userAgent
+      properties:
+        openedAt:
+          type: string
+        userAgent:
+          type: string
     OrganizationResponse:
       type: object
       required:
@@ -6656,12 +6049,12 @@ components:
           description: The id of the organization
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - org_01ka8k8s80gvx9604cn9am5st4
         name:
           description: The name of the organization
           type: string
           examples:
-            - example.com
+            - Acme Inc.
         status:
           description: The status of the organization
           type: string
@@ -6679,12 +6072,12 @@ components:
           description: The id of the organization
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - org_01ka8k8s80gvx9604cn9am5st4
         name:
           description: The name of the organization
           type: string
           examples:
-            - example.com
+            - Acme Inc.
         status:
           description: The status of the organization
           type: string
@@ -6744,6 +6137,13 @@ components:
                   type: number
                 monthly:
                   type: number
+    RejectDetail:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
     ReplyMessageRequest:
       type: object
       required:
@@ -6816,7 +6216,7 @@ components:
           description: The id of the message
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - imsg_01kabn43yqyxn2bx4ve84mczd3
         threadId:
           description: The id of the thread.
           type: string
@@ -6840,10 +6240,12 @@ components:
           description: The name of the tag
           type: string
           examples:
-            - example.com
+            - category
         value:
           description: The tag to add to the email
           type: string
+          examples:
+            - transactional
     ThreadMessagesResponseItem:
       type: object
       required:
@@ -6866,7 +6268,7 @@ components:
           description: The id of the message
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - imsg_01kabn43yqyxn2bx4ve84mczd3
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -6958,7 +6360,7 @@ components:
           description: The id of the thread
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - thr_01kabn43yqyxn2bx4ve84mczd3
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -7029,7 +6431,7 @@ components:
           description: The id of the thread
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - thr_01kabn43yqyxn2bx4ve84mczd3
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -7072,14 +6474,12 @@ components:
           nullable: true
     UpdateApiKeyRequest:
       type: object
-      required:
-        - permission
       properties:
         name:
           description: The name of the api key
           type: string
           examples:
-            - example.com
+            - Production
         status:
           type: string
           enum:
@@ -7105,16 +6505,20 @@ components:
           description: The id of the api key
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - apk_01ka8k8s80gvx9604cn9am5st4
     UpdateDomainRequest:
       type: object
       properties:
         openTracking:
           description: Emit an event for each recipient opens an email their email client
           type: boolean
+          examples:
+            - true
         clickTracking:
           description: Emit an event for each time the recipient clicks a link in the email
           type: boolean
+          examples:
+            - true
         sending:
           description: Enable or disable sending
           type: boolean
@@ -7132,13 +6536,17 @@ components:
           description: The id of the domain
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - dns_01kabn43yqyxn2bx4ve84mczd3
         openTracking:
           description: Emit an event for each recipient opens an email their email client
           type: boolean
+          examples:
+            - true
         clickTracking:
           description: Emit an event for each time the recipient clicks a link in the email
           type: boolean
+          examples:
+            - true
     UpdateInboxRequest:
       type: object
       properties:
@@ -7146,8 +6554,6 @@ components:
           description: The display name of the inbox.
           type: string
           nullable: true
-          examples:
-            - example.com
     UpdateMessageRequest:
       type: object
       properties:
@@ -7167,8 +6573,6 @@ components:
         name:
           description: The display name of the namespace.
           type: string
-          examples:
-            - example.com
         externalId:
           description: An optional external identifier for the namespace.
           type: string
@@ -7197,7 +6601,7 @@ components:
           description: The name of the webhook
           type: string
           examples:
-            - example.com
+            - Production webhook
         endpointUrl:
           description: The endpoint URL of the webhook
           type: string
@@ -7226,7 +6630,7 @@ components:
           description: The id of the webhook
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - wh_01ka8k8s80gvx9604cn9am5st4
         signingSecret:
           description: The signing secret of the webhook.
           type: string
@@ -7274,7 +6678,7 @@ components:
           description: The id of the webhook event
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - evt_01ka8k8s80gvx9604cn9am5st4
         webhookId:
           description: The id of the webhook
           type: string
@@ -7314,12 +6718,12 @@ components:
           description: The id of the webhook
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - wh_01ka8k8s80gvx9604cn9am5st4
         name:
           description: The name of the webhook
           type: string
           examples:
-            - example.com
+            - Production webhook
         endpointUrl:
           description: The endpoint URL of the webhook
           type: string
@@ -7355,12 +6759,12 @@ components:
           description: The id of the webhook
           type: string
           examples:
-            - em_01ka8k8s80gvx9604cn9am5st4
+            - wh_01ka8k8s80gvx9604cn9am5st4
         name:
           description: The name of the webhook
           type: string
           examples:
-            - example.com
+            - Production webhook
         endpointUrl:
           description: The endpoint URL of the webhook
           type: string
