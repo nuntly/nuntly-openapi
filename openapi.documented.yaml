@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nuntly REST API 1.x
-  version: 1.0.0-alpha.13
+  version: 1.0.0-alpha.14
   description: Nuntly REST API definition
   termsOfService: https://nuntly.com/legal/terms-of-service
   contact:
@@ -76,9 +76,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/agents/aB3dE7fG/memory' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -133,9 +137,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X PUT 'https://api.nuntly.com/agents/aB3dE7fG/memory' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"memory":{}}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -160,7 +170,7 @@ paths:
   /api-keys:
     post:
       summary: Create Api Key
-      description: Generate a new API key. The key value is only returned once — store it securely.
+      description: Generate a new API key. The key value is only returned once. Store it securely.
       operationId: create-api-key
       tags:
         - API Keys
@@ -189,9 +199,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/api-keys' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"name":"Production","permission":"fullAccess"}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -222,16 +238,8 @@ paths:
       tags:
         - API Keys
       parameters:
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
       responses:
         "200":
           description: Successful response.
@@ -245,8 +253,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/ApiKeysResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -256,9 +265,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/api-keys' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -309,9 +322,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X DELETE 'https://api.nuntly.com/api-keys/apk_01ka8k8s80gvx9604cn9am5st4' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -361,9 +378,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/api-keys/apk_01ka8k8s80gvx9604cn9am5st4' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -418,9 +439,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X PATCH 'https://api.nuntly.com/api-keys/apk_01ka8k8s80gvx9604cn9am5st4' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"name":"Production"}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -445,7 +472,7 @@ paths:
   /domains:
     post:
       summary: Create Domain
-      description: Add a domain to start configuring DNS records for sending or receiving emails.
+      description: Add a domain for sending or receiving emails.
       operationId: create-domain
       tags:
         - Domains
@@ -474,9 +501,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/domains' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"name":"example.com"}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -505,16 +538,8 @@ paths:
       tags:
         - Domains
       parameters:
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
       responses:
         "200":
           description: Successful response.
@@ -528,8 +553,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/DomainsResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -539,9 +565,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/domains' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -592,9 +622,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X DELETE 'https://api.nuntly.com/domains/dns_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -644,9 +678,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/domains/dns_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -701,9 +739,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X PATCH 'https://api.nuntly.com/domains/dns_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"openTracking":true,"clickTracking":true}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -735,16 +779,8 @@ paths:
       tags:
         - Emails
       parameters:
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
       responses:
         "200":
           description: Successful response.
@@ -758,8 +794,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/EmailsResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -769,9 +806,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/emails' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -794,6 +835,15 @@ paths:
       operationId: send-email
       tags:
         - Emails
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Unique key to ensure the request is processed at most once. UUIDv4 recommended.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
       requestBody:
         content:
           application/json:
@@ -819,9 +869,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/emails' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"from":"Tomlinson AI <ray@info.tomlinson.ai>","to":"brian67@gmail.com","subject":"Verify your email address","text":"Thank you for signing up! Please verify your email address.","html":"<h1>Welcome 🎉</h1><p>Thank you for signing up! Please verify your email address.</p>","tags":[{"name":"category","value":"transactional"}]}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -887,9 +943,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X DELETE 'https://api.nuntly.com/emails/em_01ka8k8s80gvx9604cn9am5st4' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -939,9 +999,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/emails/em_01ka8k8s80gvx9604cn9am5st4' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -991,9 +1055,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/emails/apk_01ka8k8s80gvx9604cn9am5st4/content' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1013,7 +1081,7 @@ paths:
   /emails/{id}/events:
     get:
       summary: Retrieve Email Events
-      description: Returns the full delivery event history for an email (sent, delivered, opened, bounced, etc.).
+      description: Returns the delivery event history for an email (sent, delivered, opened, bounced, etc.).
       operationId: retrieve-email-events
       tags:
         - Emails
@@ -1043,9 +1111,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/emails/apk_01ka8k8s80gvx9604cn9am5st4/events' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1069,6 +1141,15 @@ paths:
       operationId: send-bulk-emails
       tags:
         - Emails
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Unique key to ensure the request is processed at most once. UUIDv4 recommended.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
       requestBody:
         content:
           application/json:
@@ -1094,9 +1175,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/emails/bulk' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"emails":[{"from":"Tomlinson AI <ray@info.tomlinson.ai>","to":"brian67@gmail.com","subject":"Verify your email address","text":"Thank you for signing up! Please verify your email address."}]}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1121,7 +1208,7 @@ paths:
   /emails/bulk/{bulkId}:
     get:
       summary: Retrieve Bulk Emails
-      description: Returns the delivery status of all emails submitted in a bulk request.
+      description: Returns the emails submitted in a bulk request.
       operationId: retrieve-bulk-emails
       tags:
         - Emails
@@ -1151,9 +1238,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/emails/bulk/blk_01ka8k8s80gvx9604cn9am5st4' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1197,9 +1288,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/emails/stats' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1248,9 +1343,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/inboxes' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"address":"<address>"}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1279,31 +1380,13 @@ paths:
       tags:
         - Inboxes
       parameters:
-        - name: cursor
-          in: query
-          description: The cursor to retrieve the next page of results
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: The maximum number of results to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
         - name: namespaceId
           in: query
           description: Filter by namespace.
           schema:
             type: string
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
       responses:
         "200":
           description: Successful response.
@@ -1317,8 +1400,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/InboxesResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -1328,9 +1412,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/inboxes' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1380,9 +1468,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X DELETE 'https://api.nuntly.com/inboxes/ibx_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1431,9 +1523,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/inboxes/ibx_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1487,9 +1583,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X PATCH 'https://api.nuntly.com/inboxes/ibx_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1520,6 +1622,14 @@ paths:
           required: true
           schema:
             type: string
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Unique key to ensure the request is processed at most once. UUIDv4 recommended.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
       requestBody:
         content:
           application/json:
@@ -1545,9 +1655,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/inboxes/ibx_01kabn43yqyxn2bx4ve84mczd3/messages' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"to":"brian67@gmail.com","subject":"Verify your email address","text":"Thank you for signing up! Please verify your email address.","html":"<h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>"}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1588,31 +1704,13 @@ paths:
           required: true
           schema:
             type: string
-        - name: cursor
-          in: query
-          description: The cursor to retrieve the next page of results
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: The maximum number of results to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
         - name: labels
           in: query
           description: Comma-separated labels to filter by (AND logic). Threads with spam/trash are excluded by default unless explicitly requested via ?labels=spam or ?labels=trash.
           schema:
             type: string
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
       responses:
         "200":
           description: Successful response.
@@ -1626,8 +1724,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/ThreadsResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -1637,9 +1736,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/inboxes/ibx_01kabn43yqyxn2bx4ve84mczd3/threads' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1664,16 +1767,8 @@ paths:
       tags:
         - Messages
       parameters:
-        - name: cursor
-          in: query
-          description: The cursor to retrieve the next page of results
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: The maximum number of results to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
         - name: domainId
           in: query
           description: Filter by domain.
@@ -1684,16 +1779,6 @@ paths:
           description: Filter by sender address.
           schema:
             type: string
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
       responses:
         "200":
           description: Successful response.
@@ -1707,8 +1792,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/MessagesResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -1718,9 +1804,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/messages' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1771,9 +1861,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/messages/imsg_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1827,9 +1921,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X PATCH 'https://api.nuntly.com/messages/imsg_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1880,9 +1980,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/messages/imsg_01kabn43yqyxn2bx4ve84mczd3/attachments' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1937,9 +2041,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/messages/imsg_01kabn43yqyxn2bx4ve84mczd3/attachments/iatt_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -1989,9 +2097,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/messages/imsg_01kabn43yqyxn2bx4ve84mczd3/content' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2022,6 +2134,14 @@ paths:
           description: The RFC 5322 Message-ID header.
           schema:
             type: string
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Unique key to ensure the request is processed at most once. UUIDv4 recommended.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
       requestBody:
         content:
           application/json:
@@ -2047,9 +2167,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/messages/imsg_01kabn43yqyxn2bx4ve84mczd3/forward' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"to":"brian67@gmail.com","text":"Thank you for signing up! Please verify your email address."}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2087,6 +2213,14 @@ paths:
           description: The RFC 5322 Message-ID header.
           schema:
             type: string
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Unique key to ensure the request is processed at most once. UUIDv4 recommended.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
       requestBody:
         content:
           application/json:
@@ -2112,9 +2246,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/messages/imsg_01kabn43yqyxn2bx4ve84mczd3/reply' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"text":"Thank you for signing up! Please verify your email address.","html":"<h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>","replyAll":false}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2172,9 +2312,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/namespaces' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"name":"<name>"}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2203,26 +2349,8 @@ paths:
       tags:
         - Namespaces
       parameters:
-        - name: cursor
-          in: query
-          description: The cursor to retrieve the next page of results
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: The maximum number of results to return
-          schema:
-            type: number
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
       responses:
         "200":
           description: Successful response.
@@ -2236,8 +2364,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/NamespacesResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -2247,9 +2376,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/namespaces' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2299,9 +2432,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X DELETE 'https://api.nuntly.com/namespaces/ns_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2350,9 +2487,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/namespaces/ns_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2406,9 +2547,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X PATCH 'https://api.nuntly.com/namespaces/ns_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2439,26 +2586,8 @@ paths:
           required: true
           schema:
             type: string
-        - name: cursor
-          in: query
-          description: The cursor to retrieve the next page of results
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: The maximum number of results to return
-          schema:
-            type: number
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
       responses:
         "200":
           description: Successful response.
@@ -2472,8 +2601,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/InboxesResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -2483,9 +2613,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/namespaces/ns_01kabn43yqyxn2bx4ve84mczd3/inboxes' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2504,22 +2638,14 @@ paths:
             var response = nuntly.namespaces().inboxes().list("ns_01kabn43yqyxn2bx4ve84mczd3");
   /organizations:
     get:
-      summary: Retrieve Organizations
+      summary: List Organizations
       description: Returns all organizations the authenticated user belongs to.
-      operationId: retrieve-organizations
+      operationId: list-organizations
       tags:
         - Organizations
       parameters:
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
       responses:
         "200":
           description: Successful response.
@@ -2533,8 +2659,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/OrganizationsResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -2544,9 +2671,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/organizations' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2597,9 +2728,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/organizations/org_01ka8k8s80gvx9604cn9am5st4' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2649,9 +2784,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/organizations/apk_01ka8k8s80gvx9604cn9am5st4/usage' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2701,9 +2840,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/threads/thr_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2757,9 +2900,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X PATCH 'https://api.nuntly.com/threads/thr_01kabn43yqyxn2bx4ve84mczd3' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2790,16 +2939,8 @@ paths:
           required: true
           schema:
             type: string
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
       responses:
         "200":
           description: Successful response.
@@ -2813,8 +2954,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/ThreadMessagesResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -2824,9 +2966,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/threads/thr_01kabn43yqyxn2bx4ve84mczd3/messages' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2875,9 +3021,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/webhooks' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"name":"Production webhook","endpointUrl":"https://example.com/webhooks","events":["email.queued"]}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2910,16 +3062,8 @@ paths:
       tags:
         - Webhooks
       parameters:
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
       responses:
         "200":
           description: Successful response.
@@ -2933,8 +3077,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/WebhooksResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -2944,9 +3089,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/webhooks' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -2997,9 +3146,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X DELETE 'https://api.nuntly.com/webhooks/wh_01ka8k8s80gvx9604cn9am5st4' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -3049,9 +3202,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/webhooks/wh_01ka8k8s80gvx9604cn9am5st4' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -3106,9 +3263,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X PATCH 'https://api.nuntly.com/webhooks/wh_01ka8k8s80gvx9604cn9am5st4' \
+              -H 'Authorization: Bearer apk_xxx' \
+              -H 'Content-Type: application/json' \
+              -d '{"name":"Production webhook","events":["email.queued"]}'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -3170,9 +3333,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/webhooks/apk_01ka8k8s80gvx9604cn9am5st4/events/evt_01ka8k8s80gvx9604cn9am5st4/deliveries' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -3217,9 +3384,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X POST 'https://api.nuntly.com/webhooks/apk_01ka8k8s80gvx9604cn9am5st4/events/evt_01ka8k8s80gvx9604cn9am5st4/replay' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -3244,16 +3415,8 @@ paths:
       tags:
         - Webhooks Events
       parameters:
-        - name: cursor
-          in: query
-          description: Pagination cursor from a previous response
-          schema:
-            type: string
-        - name: limit
-          in: query
-          description: Maximum number of items to return
-          schema:
-            type: number
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
       responses:
         "200":
           description: Successful response.
@@ -3267,8 +3430,9 @@ paths:
                     items:
                       $ref: "#/components/schemas/WebhookEventsResponseItem"
                   nextCursor:
-                    type: string
-                    nullable: true
+                    type:
+                      - string
+                      - "null"
                 required:
                   - data
         "500":
@@ -3278,9 +3442,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       x-codeSamples:
+        - lang: cURL
+          source: |-
+            curl -X GET 'https://api.nuntly.com/webhooks/events' \
+              -H 'Authorization: Bearer apk_xxx'
         - lang: JavaScript
           source: |-
-            import Nuntly from '@nuntly/sdk';
+            import { Nuntly } from '@nuntly/sdk';
 
             const client = new Nuntly({
               apiKey: process.env['NUNTLY_API_KEY'],
@@ -3322,6 +3490,24 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
+      bearerFormat: API Key (format apk_...)
+      description: Use an API key from https://nuntly.com/dashboard/api-keys. Required on every endpoint.
+  parameters:
+    CursorParam:
+      name: cursor
+      in: query
+      description: Pagination cursor from a previous response
+      schema:
+        type: string
+    LimitParam:
+      name: limit
+      in: query
+      description: Maximum number of items to return
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 30
+        default: 30
   schemas:
     AgentMemory:
       type: object
@@ -3352,22 +3538,25 @@ components:
           type: string
         inboxId:
           description: The inbox id.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
           examples:
             - ibx_01ka8k8s80gvx9604cn9am5st4
         threadId:
           description: The thread id.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         memory:
           description: The agent memory data.
           type: object
           additionalProperties: true
         summary:
           description: The conversation summary.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     AgentMemoryRequest:
       type: object
       required:
@@ -3387,8 +3576,9 @@ components:
           additionalProperties: true
         summary:
           description: A human-readable conversation summary.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     ApiKeyResponse:
       type: object
       required:
@@ -3492,8 +3682,9 @@ components:
             - iatt_01kabn43yqyxn2bx4ve84mczd3
         filename:
           description: The original filename.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         contentType:
           description: The MIME content type.
           type: string
@@ -3502,12 +3693,14 @@ components:
           type: number
         contentDisposition:
           description: The content disposition (inline or attachment).
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         contentId:
           description: The CID for inline images.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         downloadUrl:
           description: Presigned download URL (included when retrieving a single attachment).
           type: string
@@ -4425,8 +4618,9 @@ components:
           type: string
         size:
           description: Uncompressed size in bytes.
-          type: number
-          nullable: true
+          type:
+            - number
+            - "null"
         expiresAt:
           description: When the URL expires.
           type: string
@@ -4442,32 +4636,38 @@ components:
       properties:
         html:
           description: HTML content, or `null` if unavailable.
-          $ref: '#/components/schemas/EmailContentItem'
-          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/EmailContentItem'
+            - type: "null"
           examples:
             - <h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>
         text:
           description: Plain text content, or `null` if unavailable.
-          $ref: '#/components/schemas/EmailContentItem'
-          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/EmailContentItem'
+            - type: "null"
           examples:
             - Thank you for signing up! Please verify your email address.
         mime:
           description: Raw MIME (.eml) content, or `null` if unavailable.
-          $ref: '#/components/schemas/EmailContentItem'
-          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/EmailContentItem'
+            - type: "null"
         subjectTemplate:
           description: Subject template content, or `null` if unavailable. Returned for failed emails only.
-          $ref: '#/components/schemas/EmailContentItem'
-          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/EmailContentItem'
+            - type: "null"
         htmlTemplate:
           description: HTML template content, or `null` if unavailable. Returned for failed emails only.
-          $ref: '#/components/schemas/EmailContentItem'
-          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/EmailContentItem'
+            - type: "null"
         textTemplate:
           description: Text template content, or `null` if unavailable. Returned for failed emails only.
-          $ref: '#/components/schemas/EmailContentItem'
-          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/EmailContentItem'
+            - type: "null"
     EmailDeliveredEvent:
       title: email.delivered
       type: object
@@ -5433,20 +5633,24 @@ components:
           type: string
         name:
           description: The display name of the inbox.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         namespaceId:
           description: The id of the namespace.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         namespaceName:
           description: The display name of the namespace.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         agentId:
           description: The AI agent identifier.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     InboxResponse:
       type: object
       required:
@@ -5484,20 +5688,24 @@ components:
           type: string
         name:
           description: The display name of the inbox.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         namespaceId:
           description: The id of the namespace.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         namespaceName:
           description: The display name of the namespace.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         agentId:
           description: The AI agent identifier.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     MessageAgentTriggeredEvent:
       title: message.agent.triggered
       type: object
@@ -5530,20 +5738,23 @@ components:
       properties:
         text:
           description: Plain text content, or `null` if not requested or unavailable.
-          $ref: '#/components/schemas/MessageContentItem'
-          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/MessageContentItem'
+            - type: "null"
           examples:
             - Thank you for signing up! Please verify your email address.
         html:
           description: HTML content, or `null` if not requested or unavailable.
-          $ref: '#/components/schemas/MessageContentItem'
-          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/MessageContentItem'
+            - type: "null"
           examples:
             - <h1>Welcome</h1><p>Thank you for signing up! Please verify your email address.</p>
         mime:
           description: Raw MIME (.eml) content, or `null` if not requested or unavailable. Returned for received messages only.
-          $ref: '#/components/schemas/MessageContentItem'
-          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/MessageContentItem'
+            - type: "null"
     MessageContentItem:
       type: object
       required:
@@ -5556,8 +5767,9 @@ components:
           type: string
         size:
           description: Uncompressed size in bytes.
-          type: number
-          nullable: true
+          type:
+            - number
+            - "null"
         expiresAt:
           description: When the URL expires.
           type: string
@@ -5675,8 +5887,9 @@ components:
             - "2026-03-29T12:00:00.000Z"
         inboxId:
           description: The id of the inbox, or null if routed to the default catch-all.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
           examples:
             - ibx_01ka8k8s80gvx9604cn9am5st4
         threadId:
@@ -5701,26 +5914,29 @@ components:
             - brian67@gmail.com
         cc:
           description: The CC addresses.
-          type: array
-          items:
-            type: string
-          nullable: true
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
           examples:
             - carlo43@gmail.com
         bcc:
           description: The BCC addresses.
-          type: array
-          items:
-            type: string
-          nullable: true
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
           examples:
             - archive@company.com
         replyTo:
           description: The Reply-To addresses.
-          type: array
-          items:
-            type: string
-          nullable: true
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
           examples:
             - support@company.com
         subject:
@@ -5749,9 +5965,10 @@ components:
           type: number
         headers:
           description: The raw email headers.
-          type: object
-          additionalProperties: true
-          nullable: true
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: "null"
     MessageSecurityFlaggedEvent:
       title: message.security.flagged
       type: object
@@ -5846,8 +6063,9 @@ components:
             - "2026-03-29T12:00:00.000Z"
         inboxId:
           description: The id of the inbox, or null if routed to the default catch-all.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
           examples:
             - ibx_01ka8k8s80gvx9604cn9am5st4
         threadId:
@@ -5872,26 +6090,29 @@ components:
             - brian67@gmail.com
         cc:
           description: The CC addresses.
-          type: array
-          items:
-            type: string
-          nullable: true
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
           examples:
             - carlo43@gmail.com
         bcc:
           description: The BCC addresses.
-          type: array
-          items:
-            type: string
-          nullable: true
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
           examples:
             - archive@company.com
         replyTo:
           description: The Reply-To addresses.
-          type: array
-          items:
-            type: string
-          nullable: true
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
           examples:
             - support@company.com
         subject:
@@ -5946,8 +6167,9 @@ components:
           type: string
         externalId:
           description: The external identifier for the namespace.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         inboxCount:
           description: The total number of inboxes in this namespace.
           type: number
@@ -5989,8 +6211,9 @@ components:
           type: string
         externalId:
           description: The external identifier for the namespace.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     NamespacesQuery:
       type: object
       properties:
@@ -6026,8 +6249,9 @@ components:
           type: string
         externalId:
           description: The external identifier for the namespace.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     OpenDetail:
       type: object
       required:
@@ -6296,26 +6520,29 @@ components:
             - brian67@gmail.com
         cc:
           description: The CC addresses.
-          type: array
-          items:
-            type: string
-          nullable: true
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
           examples:
             - carlo43@gmail.com
         bcc:
           description: The BCC addresses.
-          type: array
-          items:
-            type: string
-          nullable: true
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
           examples:
             - archive@company.com
         replyTo:
           description: The Reply-To addresses.
-          type: array
-          items:
-            type: string
-          nullable: true
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: "null"
           examples:
             - support@company.com
         subject:
@@ -6371,8 +6598,9 @@ components:
           type: string
         domainId:
           description: The id of the domain.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         domainName:
           description: The domain name.
           type: string
@@ -6399,8 +6627,9 @@ components:
             type: string
         agentId:
           description: The AI agent identifier.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     ThreadsQuery:
       type: object
       properties:
@@ -6442,8 +6671,9 @@ components:
           type: string
         domainId:
           description: The id of the domain.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         domainName:
           description: The domain name.
           type: string
@@ -6470,8 +6700,9 @@ components:
             type: string
         agentId:
           description: The AI agent identifier.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     UpdateApiKeyRequest:
       type: object
       properties:
@@ -6552,8 +6783,9 @@ components:
       properties:
         name:
           description: The display name of the inbox.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     UpdateMessageRequest:
       type: object
       properties:
@@ -6575,8 +6807,9 @@ components:
           type: string
         externalId:
           description: An optional external identifier for the namespace.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     UpdateThreadRequest:
       type: object
       properties:
@@ -6592,8 +6825,9 @@ components:
             type: string
         agentId:
           description: The AI agent identifier.
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
     UpdateWebhookRequest:
       type: object
       properties:
