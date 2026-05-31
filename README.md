@@ -10,7 +10,7 @@ OpenAPI 3.1 specification for the [Nuntly](https://nuntly.com) REST API.
 
 | File | Description | Usage |
 |------|-------------|-------|
-| `openapi.yaml` | Technical spec (55 operations) | Postman, Insomnia, code generators, API testing |
+| `openapi.yaml` | Technical spec (56 operations) | Postman, Insomnia, code generators, API testing |
 | `openapi.documented.yaml` | Spec with field examples | Mintlify docs, Redoc, developer portal |
 
 ## Usage
