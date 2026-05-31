@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nuntly REST API 1.x
-  version: 1.0.0-alpha.14
+  version: 1.0.0-alpha.18
   description: Nuntly REST API definition
   termsOfService: https://nuntly.com/legal/terms-of-service
   contact:
@@ -907,7 +907,7 @@ paths:
                 .subject("Verify your email address")
                 .text("Thank you for signing up! Please verify your email address.")
                 .html("<h1>Welcome 🎉</h1><p>Thank you for signing up! Please verify your email address.</p>")
-                .tags(List.of(java.util.Map.of()))
+                .tags(List.of(Tag.builder().name("category").value("transactional").build()))
                 .build());
   /emails/{id}:
     delete:
@@ -1203,7 +1203,7 @@ paths:
                 .build());
 
             var response = nuntly.emails().bulk().send(CreateBulkEmailsRequest.builder()
-                .emails(List.of(java.util.Map.of()))
+                .emails(List.of(CreateBulkEmail.builder().from("Tomlinson AI <ray@info.tomlinson.ai>").to("brian67@gmail.com").subject("Verify your email address").text("Thank you for signing up! Please verify your email address.").build()))
                 .build());
   /emails/bulk/{bulkId}:
     get:
@@ -3889,109 +3889,97 @@ components:
             - enabled
             - disabled
             - revoked
+    CreateBulkEmail:
+      type: object
+      properties:
+        from:
+          description: The e-mail address of the sender
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        to:
+          description: The primary recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - brian67@gmail.com
+            - - carlo43@gmail.com
+              - pink42@yahoo.com
+        cc:
+          description: The carbon copy recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - carlo43@gmail.com
+        bcc:
+          description: The blind carbon copy recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - archive@company.com
+        replyTo:
+          description: The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - support@company.com
+        subject:
+          description: The subject of the e-mail
+          type: string
+          examples:
+            - Verify your email address
+        text:
+          description: The plaintext version of the email
+          type: string
+          examples:
+            - Thank you for signing up! Please verify your email address.
+        html:
+          description: The HTML version of the email
+          type: string
+          examples:
+            - <h1>Welcome 🎉</h1><p>Thank you for signing up! Please verify your email address.</p>
+        headers:
+          description: The headers to add to the email
+          type: object
+          additionalProperties: true
+        tags:
+          description: The tags to add to the email
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        variables:
+          description: The variables for the template
+          type: object
+          additionalProperties: true
+    CreateBulkEmails:
+      type: array
+      items:
+        $ref: "#/components/schemas/CreateBulkEmail"
     CreateBulkEmailsRequest:
       type: object
       required:
         - emails
       properties:
         fallback:
-          description: Used as a fallback field email value if no value is present in emails
-          type: object
-          properties:
-            from:
-              type: string
-            to:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            cc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            bcc:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            replyTo:
-              anyOf:
-                - type: array
-                  items:
-                    type: string
-                - type: string
-            subject:
-              type: string
-            text:
-              type: string
-            html:
-              type: string
-            headers:
-              type: object
-              additionalProperties: true
-            tags:
-              type: array
-              items:
-                $ref: '#/components/schemas/Tag'
-            variables:
-              type: object
-              additionalProperties: true
-            scheduledAt:
-              type: string
+          description: Used as a fallback field email value if no value is present in emails.
+          $ref: '#/components/schemas/CreateBulkFallback'
         emails:
-          description: The bulk emails to send
+          description: The bulk emails to send.
           type: array
           items:
-            type: object
-            properties:
-              from:
-                type: string
-              to:
-                anyOf:
-                  - type: array
-                    items:
-                      type: string
-                  - type: string
-              cc:
-                anyOf:
-                  - type: array
-                    items:
-                      type: string
-                  - type: string
-              bcc:
-                anyOf:
-                  - type: array
-                    items:
-                      type: string
-                  - type: string
-              replyTo:
-                anyOf:
-                  - type: array
-                    items:
-                      type: string
-                  - type: string
-              subject:
-                type: string
-              text:
-                type: string
-              html:
-                type: string
-              headers:
-                type: object
-                additionalProperties: true
-              tags:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Tag'
-              variables:
-                type: object
-                additionalProperties: true
-              scheduledAt:
-                type: string
+            $ref: '#/components/schemas/CreateBulkEmail'
     CreateBulkEmailsResponse:
       type: object
       required:
@@ -4013,6 +4001,80 @@ components:
                 type: string
               status:
                 $ref: '#/components/schemas/EmailStatus'
+    CreateBulkFallback:
+      type: object
+      properties:
+        from:
+          description: The e-mail address of the sender
+          type: string
+          examples:
+            - Tomlinson AI <ray@info.tomlinson.ai>
+        to:
+          description: The primary recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - brian67@gmail.com
+            - - carlo43@gmail.com
+              - pink42@yahoo.com
+        cc:
+          description: The carbon copy recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - carlo43@gmail.com
+        bcc:
+          description: The blind carbon copy recipient(s) of the email
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - archive@company.com
+        replyTo:
+          description: The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+          examples:
+            - support@company.com
+        subject:
+          description: The subject of the e-mail
+          type: string
+          examples:
+            - Verify your email address
+        text:
+          description: The plaintext version of the email
+          type: string
+          examples:
+            - Thank you for signing up! Please verify your email address.
+        html:
+          description: The HTML version of the email
+          type: string
+          examples:
+            - <h1>Welcome 🎉</h1><p>Thank you for signing up! Please verify your email address.</p>
+        headers:
+          description: The headers to add to the email
+          type: object
+          additionalProperties: true
+        tags:
+          description: The tags to add to the email
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        variables:
+          description: The variables for the template
+          type: object
+          additionalProperties: true
     CreateDomainRequest:
       type: object
       required:
