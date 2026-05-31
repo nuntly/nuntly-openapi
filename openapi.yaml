@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nuntly REST API 1.x
-  version: 1.0.0-alpha.19
+  version: 1.0.0-alpha.20
   description: Nuntly REST API definition
   termsOfService: https://nuntly.com/legal/terms-of-service
   contact:
@@ -170,6 +170,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -336,6 +337,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -472,6 +474,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -807,6 +810,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -995,6 +999,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -1039,6 +1044,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -1365,6 +1371,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -1503,6 +1510,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -1537,6 +1545,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -1709,6 +1718,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -1773,6 +1783,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
@@ -1973,6 +1984,7 @@ paths:
                       - "null"
                 required:
                   - data
+                additionalProperties: false
         "500":
           description: An error response
           content:
