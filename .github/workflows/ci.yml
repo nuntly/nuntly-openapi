@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Validate OpenAPI spec
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # Structural OpenAPI 3.1 validation. Style warnings do not fail the build;
+      # an invalid spec (bad refs, broken structure) does.
+      - run: npx -y @redocly/cli@latest lint openapi.yaml openapi.documented.yaml
