@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nuntly REST API 1.x
-  version: 1.0.0
+  version: 1.1.0
   description: Nuntly REST API definition
   termsOfService: https://nuntly.com/legal/terms-of-service
   contact:
@@ -2017,7 +2017,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: API Key (format apk_...)
-      description: Use an API key from https://nuntly.com/dashboard/api-keys. Required on every endpoint.
+      description: Use an API key from https://nuntly.com/api-keys. Required on every endpoint.
   parameters:
     CursorParam:
       name: cursor
@@ -3688,7 +3688,7 @@ components:
               - sending
               - sent
               - delivered
-              - deliveredDelayed
+              - deliveryDelayed
               - bounced
               - failed
               - rejected
@@ -3714,7 +3714,7 @@ components:
                 type: number
               delivered:
                 type: number
-              deliveredDelayed:
+              deliveryDelayed:
                 type: number
               bounced:
                 type: number
