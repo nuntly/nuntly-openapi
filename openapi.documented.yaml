@@ -4309,11 +4309,12 @@ components:
             - revoked
         disabledReason:
           description: The reason the webhook was disabled, or `null` if it is not disabled.
-          type: string
-          enum:
-            - manual
-            - auto_consecutive_failures
-            - null
+          oneOf:
+            - type: string
+              enum:
+                - manual
+                - auto_consecutive_failures
+            - type: "null"
         disabledAt:
           description: The timestamp when the webhook was disabled, or `null` if it is not disabled.
           type:
@@ -7082,11 +7083,12 @@ components:
             - revoked
         disabledReason:
           description: The reason the webhook was disabled, or `null` if it is not disabled.
-          type: string
-          enum:
-            - manual
-            - auto_consecutive_failures
-            - null
+          oneOf:
+            - type: string
+              enum:
+                - manual
+                - auto_consecutive_failures
+            - type: "null"
         disabledAt:
           description: The timestamp when the webhook was disabled, or `null` if it is not disabled.
           type:
@@ -7132,11 +7134,12 @@ components:
             - revoked
         disabledReason:
           description: The reason the webhook was disabled, or `null` if it is not disabled.
-          type: string
-          enum:
-            - manual
-            - auto_consecutive_failures
-            - null
+          oneOf:
+            - type: string
+              enum:
+                - manual
+                - auto_consecutive_failures
+            - type: "null"
         disabledAt:
           description: The timestamp when the webhook was disabled, or `null` if it is not disabled.
           type:
