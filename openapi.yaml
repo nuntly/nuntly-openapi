@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nuntly REST API 1.x
-  version: 1.1.0
+  version: 1.2.0
   description: Nuntly REST API definition
   termsOfService: https://nuntly.com/legal/terms-of-service
   contact:
@@ -2255,6 +2255,8 @@ components:
           type: string
         reportingMta:
           type: string
+        remoteMtaIp:
+          type: string
     BulkEmailsResponse:
       type: object
       required:
@@ -2290,6 +2292,14 @@ components:
           type: string
         link:
           type: string
+        linkTags:
+          type: object
+          additionalProperties: true
+        isBotEvent:
+          type: string
+          enum:
+            - Likely
+            - Unlikely
     ComplaintDetail:
       type: object
       required:
@@ -2681,6 +2691,8 @@ components:
         - id
         - endpointUrl
         - status
+        - disabledReason
+        - disabledAt
         - events
         - signingSecret
         - createdAt
@@ -2701,6 +2713,18 @@ components:
             - enabled
             - disabled
             - revoked
+        disabledReason:
+          description: The reason the webhook was disabled, or `null` if it is not disabled.
+          type: string
+          enum:
+            - manual
+            - auto_consecutive_failures
+            - null
+        disabledAt:
+          description: The timestamp when the webhook was disabled, or `null` if it is not disabled.
+          type:
+            - string
+            - "null"
         events:
           description: The event types to subscribe to
           type: array
@@ -4486,6 +4510,11 @@ components:
           type: string
         userAgent:
           type: string
+        isBotEvent:
+          type: string
+          enum:
+            - Likely
+            - Unlikely
     OrganizationResponse:
       type: object
       required:
@@ -5074,6 +5103,8 @@ components:
         - endpointUrl
         - events
         - status
+        - disabledReason
+        - disabledAt
         - createdAt
       properties:
         id:
@@ -5097,6 +5128,18 @@ components:
             - enabled
             - disabled
             - revoked
+        disabledReason:
+          description: The reason the webhook was disabled, or `null` if it is not disabled.
+          type: string
+          enum:
+            - manual
+            - auto_consecutive_failures
+            - null
+        disabledAt:
+          description: The timestamp when the webhook was disabled, or `null` if it is not disabled.
+          type:
+            - string
+            - "null"
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
           type: string
@@ -5106,6 +5149,8 @@ components:
         - id
         - endpointUrl
         - status
+        - disabledReason
+        - disabledAt
         - events
         - createdAt
       properties:
@@ -5125,6 +5170,18 @@ components:
             - enabled
             - disabled
             - revoked
+        disabledReason:
+          description: The reason the webhook was disabled, or `null` if it is not disabled.
+          type: string
+          enum:
+            - manual
+            - auto_consecutive_failures
+            - null
+        disabledAt:
+          description: The timestamp when the webhook was disabled, or `null` if it is not disabled.
+          type:
+            - string
+            - "null"
         events:
           description: The event types to subscribe to
           type: array
