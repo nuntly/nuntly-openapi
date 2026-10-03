@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Nuntly REST API 1.x
-  version: 1.2.0
+  version: 1.2.1
   description: Nuntly REST API definition
   termsOfService: https://nuntly.com/legal/terms-of-service
   contact:
@@ -54,6 +54,16 @@ paths:
           in: path
           required: true
           description: The agent identifier.
+          schema:
+            type: string
+        - name: inboxId
+          in: query
+          description: Scope memory to a specific inbox.
+          schema:
+            type: string
+        - name: threadId
+          in: query
+          description: Scope memory to a specific thread.
           schema:
             type: string
       responses:
@@ -2083,6 +2093,17 @@ paths:
           required: true
           schema:
             type: string
+        - name: format
+          in: query
+          description: Content formats to retrieve. Defaults to `html` only.
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - html
+                - text
+                - mime
       responses:
         "200":
           description: Successful response.
@@ -2829,6 +2850,11 @@ paths:
           required: true
           schema:
             type: string
+        - name: markRead
+          in: query
+          description: "Set to \"true\" to automatically remove the unread label from all messages in the thread."
+          schema:
+            type: string
       responses:
         "200":
           description: Successful response.
@@ -3569,6 +3595,17 @@ components:
           type:
             - string
             - "null"
+    AgentMemoryQuery:
+      type: object
+      properties:
+        inboxId:
+          description: Scope memory to a specific inbox.
+          type: string
+          examples:
+            - ibx_01ka8k8s80gvx9604cn9am5st4
+        threadId:
+          description: Scope memory to a specific thread.
+          type: string
     AgentMemoryRequest:
       type: object
       required:
@@ -5872,6 +5909,18 @@ components:
         expiresAt:
           description: When the URL expires.
           type: string
+    MessageContentQuery:
+      type: object
+      properties:
+        format:
+          description: Content formats to retrieve. Defaults to `html` only.
+          type: array
+          items:
+            type: string
+            enum:
+              - html
+              - text
+              - mime
     MessageReceivedEvent:
       title: message.received
       type: object
@@ -6490,6 +6539,12 @@ components:
         replyAll:
           description: Whether to reply to all recipients.
           type: boolean
+    RetrieveThreadQuery:
+      type: object
+      properties:
+        markRead:
+          description: "Set to \"true\" to automatically remove the unread label from all messages in the thread."
+          type: string
     SendMessageRequest:
       type: object
       required:
