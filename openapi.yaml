@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
-  title: Nuntly REST API 1.x
-  version: 1.2.2
+  title: Nuntly REST API
+  version: 2.0.0
   description: Nuntly REST API definition
   termsOfService: https://nuntly.com/legal/terms-of-service
   contact:
@@ -21,6 +21,9 @@ tags:
     description: Create and revoke API keys used to authenticate requests to the Nuntly API.
   - name: Agents
     description: Read and write persistent state for an AI agent, optionally scoped to a specific inbox or thread.
+  - name: Broadcasts
+  - name: Contact Properties
+  - name: Contacts
   - name: Domains
     description: Add and verify sending and receiving domains. Manage DKIM records, SPF configuration, and enable inbound email routing.
   - name: Emails
@@ -33,8 +36,13 @@ tags:
     description: Isolate inboxes by tenant, client, or agent using namespaces. Use an external ID to map namespaces to your own data model.
   - name: Organizations
     description: Manage your organization profile, team members, and account-level settings.
+  - name: Segment memberships
+  - name: Segments
+  - name: Templates
   - name: Threads
     description: Browse email conversations grouped by subject. Mark threads as read or spam, and assign them to an agent.
+  - name: Topic memberships
+  - name: Topics
   - name: Webhooks
     description: Register HTTP endpoints to receive real-time delivery events such as bounces, opens, and clicks.
   - name: Webhooks Events
@@ -45,7 +53,7 @@ paths:
   /agents/{agentId}/memory:
     get:
       summary: Retrieve Agent Memory
-      description: Retrieve the memory for an AI agent.
+      description: Retrieves the key-value memory and summary saved for an AI agent, at organization level or scoped to one inbox or thread via query parameters.
       operationId: retrieve-agent-memory
       tags:
         - Agents
@@ -58,12 +66,12 @@ paths:
             type: string
         - name: inboxId
           in: query
-          description: Scope memory to a specific inbox.
+          description: The id of an inbox in your organization. Scopes memory to that inbox.
           schema:
             type: string
         - name: threadId
           in: query
-          description: Scope memory to a specific thread.
+          description: The id of a thread in your organization. Scopes memory to that thread.
           schema:
             type: string
       responses:
@@ -87,7 +95,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     put:
       summary: Upsert Agent Memory
-      description: Create or update the memory for an AI agent.
+      description: Saves the key-value memory and optional summary of an AI agent, at organization level or scoped to a specific inbox or thread. Returns the saved memory.
       operationId: upsert-agent-memory
       tags:
         - Agents
@@ -124,8 +132,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /api-keys:
     post:
-      summary: Create Api Key
-      description: Generate a new API key. The key value is only returned once. Store it securely.
+      summary: Create API Key
+      description: Creates an API key with full access or send-only access, optionally limited to chosen domains. The secret key value is returned only in this response.
       operationId: create-api-key
       tags:
         - API Keys
@@ -154,8 +162,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
-      summary: List Api Keys
-      description: Returns all API keys for the organization. Key values are never included in list responses.
+      summary: List API Keys
+      description: Lists the API keys of your organization, newest first, with cursor pagination. Each key shows its name, status, creation date, and a short token hint.
       operationId: list-api-keys
       tags:
         - API Keys
@@ -189,8 +197,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /api-keys/{id}:
     delete:
-      summary: Delete Api Key
-      description: Revoke an API key. Requests authenticating with this key will be rejected immediately.
+      summary: Delete API Key
+      description: Permanently deletes an API key. Any request that authenticates with this key is rejected from then on. This cannot be undone.
       operationId: delete-api-key
       tags:
         - API Keys
@@ -221,8 +229,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
-      summary: Retrieve Api Key
-      description: Returns API key metadata. The key value is never returned after creation.
+      summary: Retrieve API Key
+      description: Retrieves an API key by id with its name, status, creation date, and a short token hint. The full secret key value is never returned after creation.
       operationId: retrieve-api-key
       tags:
         - API Keys
@@ -253,8 +261,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
     patch:
-      summary: Update Api Key
-      description: Update the key name, permissions, or restrict it to specific sending domains.
+      summary: Update API Key
+      description: Updates the name of an API key, enables or disables it, or changes its access level and domain restrictions. Returns the id of the updated key.
       operationId: update-api-key
       tags:
         - API Keys
@@ -289,10 +297,818 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /broadcasts:
+    post:
+      summary: Create Broadcast
+      description: Create a broadcast for your contacts.
+      operationId: create-broadcast
+      tags:
+        - Broadcasts
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Unique key to ensure the request is processed at most once. UUIDv4 recommended.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBroadcastRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/BroadcastResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List Broadcasts
+      description: List the organization broadcasts.
+      operationId: list-broadcasts
+      tags:
+        - Broadcasts
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BroadcastsResponseItem"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /broadcasts/{broadcastId}:
+    delete:
+      summary: Delete Broadcast
+      description: Delete a draft, scheduled, or failed broadcast.
+      operationId: delete-broadcast
+      tags:
+        - Broadcasts
+      parameters:
+        - name: broadcastId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: Retrieve Broadcast
+      description: Retrieve a broadcast and its status.
+      operationId: retrieve-broadcast
+      tags:
+        - Broadcasts
+      parameters:
+        - name: broadcastId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/BroadcastResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update Broadcast
+      description: Edit a draft or scheduled broadcast.
+      operationId: update-broadcast
+      tags:
+        - Broadcasts
+      parameters:
+        - name: broadcastId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBroadcastRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /broadcasts/{broadcastId}/recipients:
+    get:
+      summary: List Recipients
+      description: List the recipients of a broadcast.
+      operationId: list-broadcast-recipients
+      tags:
+        - Broadcasts
+      parameters:
+        - name: broadcastId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BroadcastRecipientsResponseItem"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /broadcasts/{broadcastId}/send:
+    post:
+      summary: Send Broadcast
+      description: Send a broadcast now or schedule it.
+      operationId: send-broadcast
+      tags:
+        - Broadcasts
+      parameters:
+        - name: broadcastId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Unique key to ensure the request is processed at most once. UUIDv4 recommended.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendBroadcastRequest"
+      responses:
+        "202":
+          description: Request accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SendBroadcastResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /contact-properties:
+    post:
+      summary: Create Contact Property
+      description: Create a contact property.
+      operationId: create-contact-property
+      tags:
+        - Contact Properties
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactPropertyRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContactPropertyResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List Contact Properties
+      description: List the organization contact properties.
+      operationId: list-contact-properties
+      tags:
+        - Contact Properties
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContactPropertiesResponseItem"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /contact-properties/{contactPropertyId}:
+    delete:
+      summary: Delete Contact Property
+      description: Delete a contact property.
+      operationId: delete-contact-property
+      tags:
+        - Contact Properties
+      parameters:
+        - name: contactPropertyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: Retrieve Contact Property
+      description: Retrieve one contact property.
+      operationId: retrieve-contact-property
+      tags:
+        - Contact Properties
+      parameters:
+        - name: contactPropertyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContactPropertyResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update Contact Property
+      description: Update a contact property.
+      operationId: update-contact-property
+      tags:
+        - Contact Properties
+      parameters:
+        - name: contactPropertyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContactPropertyRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /contacts:
+    post:
+      summary: Create Contact
+      description: Create a contact.
+      operationId: create-contact
+      tags:
+        - Contacts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateContactRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContactResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List Contacts
+      description: List the organization contacts.
+      operationId: list-contacts
+      tags:
+        - Contacts
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ContactsResponseItem"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /contacts/{contactId}:
+    delete:
+      summary: Delete Contact
+      description: Delete a contact.
+      operationId: delete-contact
+      tags:
+        - Contacts
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: Retrieve Contact
+      description: Retrieve one contact.
+      operationId: retrieve-contact
+      tags:
+        - Contacts
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContactResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update Contact
+      description: Update a contact's properties.
+      operationId: update-contact
+      tags:
+        - Contacts
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateContactRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /contacts/{contactId}/segments:
+    get:
+      summary: List Contact Segments
+      description: List a contact's segments.
+      operationId: list-contact-segments
+      tags:
+        - Segment memberships
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContactSegmentsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /contacts/{contactId}/segments/{segmentId}:
+    post:
+      summary: Add Contact Segment Membership
+      description: Add a contact to a segment. Idempotent.
+      operationId: add-contact-segment
+      tags:
+        - Segment memberships
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          description: The id of the contact.
+          schema:
+            type: string
+        - name: segmentId
+          in: path
+          required: true
+          description: The id of the segment.
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContactSegmentMembershipResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Remove Contact Segment Membership
+      description: Remove a contact from a segment.
+      operationId: remove-contact-segment
+      tags:
+        - Segment memberships
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: segmentId
+          in: path
+          required: true
+          description: The id of the segment the contact was removed from. The segment itself is not deleted.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContactSegmentMembershipIdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: Check Contact Segment Membership
+      description: Check if a contact is in a segment.
+      operationId: retrieve-contact-segment
+      tags:
+        - Segment memberships
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          description: The id of the contact.
+          schema:
+            type: string
+        - name: segmentId
+          in: path
+          required: true
+          description: The id of the segment.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContactSegmentMembershipResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /contacts/{contactId}/topics:
+    get:
+      summary: List Contact Topic Memberships
+      description: List a contact's subscription state per topic.
+      operationId: list-contact-topics
+      tags:
+        - Topic memberships
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ContactTopicMembershipsResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /contacts/{contactId}/topics/{topicId}:
+    put:
+      summary: Set Contact Topic Membership
+      description: Subscribe or unsubscribe a contact from a topic.
+      operationId: update-contact-topic
+      tags:
+        - Topic memberships
+      parameters:
+        - name: contactId
+          in: path
+          required: true
+          description: The id of the contact.
+          schema:
+            type: string
+        - name: topicId
+          in: path
+          required: true
+          description: The id of the topic.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetContactTopicMembershipRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SetContactTopicMembershipResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /domains:
     post:
       summary: Create Domain
-      description: Add a domain for sending or receiving emails.
+      description: Adds a domain for sending, receiving, or both, and returns the DNS records to publish. Verification starts automatically and the plan domain limit applies.
       operationId: create-domain
       tags:
         - Domains
@@ -322,7 +1138,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: List Domains
-      description: Returns all domains with their verification and capability status.
+      description: Lists the domains of your organization, newest first, with cursor pagination. Each domain shows its verification status and sending and receiving status.
       operationId: list-domains
       tags:
         - Domains
@@ -389,7 +1205,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: Retrieve Domain
-      description: Returns a domain with its DNS record configuration and current verification status for each record.
+      description: Retrieves a domain with its capabilities, tracking settings, statuses, and the DNS records to publish, each with its own verification status.
       operationId: retrieve-domain
       tags:
         - Domains
@@ -421,7 +1237,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     patch:
       summary: Update Domain
-      description: Toggle sending, receiving, open tracking, or click tracking capabilities for a domain.
+      description: Turns sending, receiving, open tracking, or click tracking on or off for a domain. Enabling a capability adds its DNS records and restarts verification.
       operationId: update-domain
       tags:
         - Domains
@@ -459,7 +1275,7 @@ paths:
   /emails:
     get:
       summary: List Emails
-      description: Returns sent emails ordered by submission date, newest first.
+      description: Lists your emails newest first with cursor pagination, up to 30 per page. Each item has its sender, recipients, subject, status and submission date.
       operationId: list-emails
       tags:
         - Emails
@@ -533,7 +1349,7 @@ paths:
   /emails/{id}:
     delete:
       summary: Cancel Email
-      description: Cancel a scheduled email before delivery. Only emails with `scheduled` status can be cancelled.
+      description: Cancels a scheduled email before it is sent and returns its id with status canceled. Only scheduled emails sent outside a bulk request qualify.
       operationId: cancel-email
       tags:
         - Emails
@@ -565,7 +1381,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: Retrieve Email
-      description: Returns an email with its current delivery status and metadata.
+      description: Returns a single email by id with its delivery status, status reason, recipients, subject, headers, tags, attachment metadata and schedule.
       operationId: retrieve-email
       tags:
         - Emails
@@ -598,7 +1414,7 @@ paths:
   /emails/{id}/content:
     get:
       summary: Retrieve Email Content
-      description: Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a sent email.
+      description: Returns download links, valid for 2 minutes, for the HTML, plain-text and raw MIME versions of an email, plus its stored subject and body templates.
       operationId: retrieve-email-content
       tags:
         - Emails
@@ -630,8 +1446,8 @@ paths:
   /emails/{id}/events:
     get:
       summary: Retrieve Email Events
-      description: Returns the delivery event history for an email (sent, delivered, opened, bounced, etc.).
-      operationId: retrieve-email-events
+      description: Returns the full event history of an email, newest first, such as queued, sent, delivered, opened, clicked or bounced. The list is not paginated.
+      operationId: list-email-events
       tags:
         - Emails
       parameters:
@@ -662,8 +1478,8 @@ paths:
   /emails/bulk:
     post:
       summary: Send Bulk Emails
-      description: Send up to 20 emails in a single request. Use `fallback` to set default values shared across all messages.
-      operationId: send-bulk-emails
+      description: Queues 1 to 20 emails in one request with optional shared fallback values, and returns a bulk id plus the id and status of each email. No scheduling.
+      operationId: send-email-bulk
       tags:
         - Emails
       parameters:
@@ -702,8 +1518,8 @@ paths:
   /emails/bulk/{bulkId}:
     get:
       summary: Retrieve Bulk Emails
-      description: Returns the emails submitted in a bulk request.
-      operationId: retrieve-bulk-emails
+      description: Returns the emails created by a bulk request, with the id and current status of each one, looked up by the bulk id returned when it was sent.
+      operationId: retrieve-email-bulk
       tags:
         - Emails
       parameters:
@@ -733,8 +1549,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /emails/stats:
     get:
-      summary: Retrieve Email Stats
-      description: Returns aggregated daily sending statistics for the current period.
+      summary: Retrieve Email Statistics
+      description: Returns daily email counts for the last 30 days and today, per status and engagement type (sent, delivered, bounced, opened, clicked and more).
       operationId: retrieve-email-stats
       tags:
         - Emails
@@ -760,10 +1576,19 @@ paths:
   /inboxes:
     post:
       summary: Create Inbox
-      description: Create a new inbox on a verified domain.
+      description: Creates an inbox address on a verified domain with receiving active, or on your provided domain if none is given. Can assign a namespace and agent id.
       operationId: create-inbox
       tags:
         - Inboxes
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: Unique key to ensure the request is processed at most once. UUIDv4 recommended.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
       requestBody:
         content:
           application/json:
@@ -790,7 +1615,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: List Inboxes
-      description: List all inboxes.
+      description: Lists the active inboxes of your organization, newest first, with cursor pagination. Optionally filter the results to a single namespace.
       operationId: list-inboxes
       tags:
         - Inboxes
@@ -830,7 +1655,7 @@ paths:
   /inboxes/{inboxId}:
     delete:
       summary: Delete Inbox
-      description: Soft-delete an inbox.
+      description: Deletes an inbox so it no longer appears in lists and stops matching incoming mail. The default catch-all inbox of a domain cannot be deleted.
       operationId: delete-inbox
       tags:
         - Inboxes
@@ -861,7 +1686,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: Retrieve Inbox
-      description: Retrieve an inbox.
+      description: Retrieves an inbox by id, including its address, domain, display name, namespace, and assigned agent id. Deleted inboxes return a not found error.
       operationId: retrieve-inbox
       tags:
         - Inboxes
@@ -892,7 +1717,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     patch:
       summary: Update Inbox
-      description: Update an inbox.
+      description: Updates the display name of an inbox, used as the sender name on messages it sends. Set the name to null to clear it. Returns the inbox id.
       operationId: update-inbox
       tags:
         - Inboxes
@@ -928,8 +1753,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /inboxes/{inboxId}/messages:
     post:
-      summary: Send Inbox Message
-      description: Send a new message from an inbox.
+      summary: Send Message
+      description: Sends a new email from an inbox to one or more recipients. The message is queued for delivery and the response returns its id, thread id, and Message-ID.
       operationId: send-inbox-message
       tags:
         - Inboxes
@@ -973,8 +1798,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /inboxes/{inboxId}/threads:
     get:
-      summary: List Inbox Threads
-      description: List threads in an inbox.
+      summary: List Threads
+      description: Lists the threads in an inbox, most recently active first, with cursor pagination. Filter by labels; spam and trash threads are excluded by default.
       operationId: list-inbox-threads
       tags:
         - Threads
@@ -1019,7 +1844,7 @@ paths:
   /messages:
     get:
       summary: List Messages
-      description: List all received messages across inboxes.
+      description: Lists messages newest first, with cursor pagination and optional filters by domain and sender. Each item includes its labels, status and attachment count.
       operationId: list-messages
       tags:
         - Messages
@@ -1064,7 +1889,7 @@ paths:
   /messages/{messageId}:
     get:
       summary: Retrieve Message
-      description: Retrieve a single message with inbox enrichment.
+      description: Retrieves a received or sent message by id, including its sender, recipients, subject, labels, status, attachment count and raw headers.
       operationId: retrieve-message
       tags:
         - Messages
@@ -1096,7 +1921,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     patch:
       summary: Update Message
-      description: Update message labels. Only available for messages in user-created inboxes.
+      description: Adds or removes labels on a message. Only messages in user-created inboxes accept labels, and a message can hold at most 10 labels.
       operationId: update-message
       tags:
         - Messages
@@ -1132,8 +1957,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /messages/{messageId}/attachments:
     get:
-      summary: List Message Attachments
-      description: List all attachments for a message.
+      summary: List Attachments
+      description: Lists the attachments of a message with their filename, content type, size, disposition and content id. Download links are not included.
       operationId: list-message-attachments
       tags:
         - Messages
@@ -1164,8 +1989,8 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /messages/{messageId}/attachments/{attachmentId}:
     get:
-      summary: Retrieve Message Attachment
-      description: Retrieve an attachment with a presigned download URL.
+      summary: Retrieve Attachment
+      description: Retrieves the metadata of an attachment and a temporary download URL that expires after 15 minutes. Use it to fetch the attachment file itself.
       operationId: retrieve-message-attachment
       tags:
         - Messages
@@ -1202,7 +2027,7 @@ paths:
   /messages/{messageId}/content:
     get:
       summary: Retrieve Message Content
-      description: Returns presigned URLs to download the HTML, plain-text, and raw MIME source of a received message.
+      description: Returns temporary download URLs, valid for 2 minutes, for the HTML, plain-text or raw MIME content of a message. Only HTML is returned by default.
       operationId: retrieve-message-content
       tags:
         - Messages
@@ -1245,7 +2070,7 @@ paths:
   /messages/{messageId}/forward:
     post:
       summary: Forward Message
-      description: Forward a message to new recipients.
+      description: "Sends a message with a Fwd: subject from the inbox of the original message to one or more new recipients, in a new thread, with an optional text note."
       operationId: forward-message
       tags:
         - Messages
@@ -1290,9 +2115,9 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /messages/{messageId}/reply:
     post:
-      summary: Reply To Message
-      description: Reply to a message. Set replyAll to true to reply to all recipients.
-      operationId: reply-to-message
+      summary: Reply to Message
+      description: Replies from the inbox that holds the message, in the same thread. Set replyAll to true to also copy the other recipients. The send is queued.
+      operationId: reply-message
       tags:
         - Messages
       parameters:
@@ -1337,7 +2162,7 @@ paths:
   /namespaces:
     post:
       summary: Create Namespace
-      description: Create a new namespace.
+      description: Creates a namespace to group inboxes, with a display name and an optional external id that maps it to a customer or tenant in your own system.
       operationId: create-namespace
       tags:
         - Namespaces
@@ -1367,7 +2192,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: List Namespaces
-      description: List all namespaces.
+      description: Lists the namespaces of your organization, newest first, with cursor pagination. Each item includes the name and the optional external id.
       operationId: list-namespaces
       tags:
         - Namespaces
@@ -1402,7 +2227,7 @@ paths:
   /namespaces/{namespaceId}:
     delete:
       summary: Delete Namespace
-      description: Soft-delete a namespace. Rejects if it has active inboxes.
+      description: Deletes a namespace by id. The request is rejected with a validation error while the namespace still has active inboxes, so delete them first.
       operationId: delete-namespace
       tags:
         - Namespaces
@@ -1433,7 +2258,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: Retrieve Namespace
-      description: Retrieve a namespace with inbox stats.
+      description: Retrieves a namespace by id with its name, its optional external id, and inbox counts, including how many of its inboxes are currently active.
       operationId: retrieve-namespace
       tags:
         - Namespaces
@@ -1464,7 +2289,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     patch:
       summary: Update Namespace
-      description: Update a namespace.
+      description: Updates the display name or external id of a namespace. Set the external id to null to clear it. Returns the id of the updated namespace.
       operationId: update-namespace
       tags:
         - Namespaces
@@ -1501,7 +2326,7 @@ paths:
   /namespaces/{namespaceId}/inboxes:
     get:
       summary: List Namespace Inboxes
-      description: List inboxes in a namespace.
+      description: Lists the active inboxes assigned to a namespace, newest first, with cursor pagination. Returns the same inbox objects as the inbox list.
       operationId: list-namespace-inboxes
       tags:
         - Namespaces
@@ -1541,7 +2366,7 @@ paths:
   /organizations:
     get:
       summary: List Organizations
-      description: Returns all organizations the authenticated user belongs to.
+      description: Lists the organization that the API key belongs to, with its id, name, and status. The result is paginated with a cursor like other list endpoints.
       operationId: list-organizations
       tags:
         - Organizations
@@ -1576,7 +2401,7 @@ paths:
   /organizations/{id}:
     get:
       summary: Retrieve Organization
-      description: Returns the organization's profile, plan, region, and account status.
+      description: Retrieves the organization that the API key belongs to by id, returning its name and its status (enabled or disabled).
       operationId: retrieve-organization
       tags:
         - Organizations
@@ -1609,7 +2434,7 @@ paths:
   /organizations/{id}/usage:
     get:
       summary: Retrieve Organization Usage
-      description: Returns current period usage metrics (daily and monthly) for sending and receiving, against your plan limits.
+      description: Returns the daily and monthly email usage of the organization, with each limit, its reset time, and a breakdown by channel.
       operationId: retrieve-organization-usage
       tags:
         - Organizations
@@ -1638,10 +2463,567 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /segments:
+    post:
+      summary: Create Segment
+      description: Create an organization-level static segment.
+      operationId: create-segment
+      tags:
+        - Segments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSegmentRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SegmentResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List Segments
+      description: List the organization segments.
+      operationId: list-segments
+      tags:
+        - Segments
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SegmentsResponseItem"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /segments/{segmentId}:
+    delete:
+      summary: Delete Segment
+      description: Delete a segment.
+      operationId: delete-segment
+      tags:
+        - Segments
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: Retrieve Segment
+      description: Retrieve one segment.
+      operationId: retrieve-segment
+      tags:
+        - Segments
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SegmentResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update Segment
+      description: Rename a segment.
+      operationId: update-segment
+      tags:
+        - Segments
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSegmentRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /segments/{segmentId}/members:
+    get:
+      summary: List Segment Members
+      description: List the members of a segment.
+      operationId: list-segment-members
+      tags:
+        - Segment memberships
+      parameters:
+        - name: segmentId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SegmentMembersResponseItem"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /templates:
+    post:
+      summary: Create Template
+      description: Create a template.
+      operationId: create-template
+      tags:
+        - Templates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTemplateRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/TemplateResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List Templates
+      description: List the organization templates.
+      operationId: list-templates
+      tags:
+        - Templates
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TemplatesResponseItem"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /templates/{templateId}:
+    delete:
+      summary: Delete Template
+      description: Delete a template and its versions.
+      operationId: delete-template
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: Retrieve Template
+      description: Retrieve one template.
+      operationId: retrieve-template
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/TemplateResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update Template
+      description: Rename a template.
+      operationId: update-template
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTemplateRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /templates/{templateId}/versions:
+    post:
+      summary: Create Template Version
+      description: Create a draft version of a template.
+      operationId: create-template-version
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: The id of the template.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTemplateVersionRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/TemplateVersionResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List Template Versions
+      description: List the versions of a template.
+      operationId: list-template-versions
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TemplateVersionsResponseItem"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /templates/{templateId}/versions/{versionId}:
+    get:
+      summary: Retrieve Template Version
+      description: Retrieve one content version.
+      operationId: retrieve-template-version
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          description: The id of the template.
+          schema:
+            type: string
+        - name: versionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/TemplateVersionResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /templates/{templateId}/versions/{versionId}/content:
+    get:
+      summary: Retrieve Template Version Content
+      description: Get download links for a version's HTML and text.
+      operationId: retrieve-template-version-content
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: versionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/TemplateVersionContentResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /templates/{templateId}/versions/{versionId}/publish:
+    patch:
+      summary: Publish Template Version
+      description: Publish a draft template version.
+      operationId: publish-template-version
+      tags:
+        - Templates
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: versionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/TemplateVersionIdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /threads/{threadId}:
     get:
       summary: Retrieve Thread
-      description: Retrieve a thread. Pass ?markRead=true to automatically remove the unread label from all messages.
+      description: Retrieves a thread with its subject, message count, last activity and labels from all its messages. Pass markRead=true to clear unread labels.
       operationId: retrieve-thread
       tags:
         - Threads
@@ -1653,9 +3035,12 @@ paths:
             type: string
         - name: markRead
           in: query
-          description: "Set to \"true\" to automatically remove the unread label from all messages in the thread."
+          description: When true, removes the unread label from all messages in the thread.
           schema:
             type: string
+            enum:
+              - "true"
+              - "false"
       responses:
         "200":
           description: Successful response.
@@ -1677,7 +3062,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     patch:
       summary: Update Thread
-      description: Update thread labels and agent assignment. Label operations apply to all messages in the thread.
+      description: Adds or removes labels on every message in a thread, or sets its agent. Label operations only work on threads in user-created inboxes.
       operationId: update-thread
       tags:
         - Threads
@@ -1714,7 +3099,7 @@ paths:
   /threads/{threadId}/messages:
     get:
       summary: List Thread Messages
-      description: List messages in a thread (chronological order).
+      description: Lists the messages in a thread in chronological order, oldest first, with cursor pagination. Returns up to 30 messages per page.
       operationId: list-thread-messages
       tags:
         - Threads
@@ -1751,10 +3136,214 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /topics:
+    post:
+      summary: Create Topic
+      description: Create a topic.
+      operationId: create-topic
+      tags:
+        - Topics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTopicRequest"
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/TopicResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: List Topics
+      description: List the organization topics.
+      operationId: list-topics
+      tags:
+        - Topics
+      parameters:
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TopicsResponseItem"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /topics/{topicId}:
+    delete:
+      summary: Delete Topic
+      description: Delete a topic.
+      operationId: delete-topic
+      tags:
+        - Topics
+      parameters:
+        - name: topicId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      summary: Retrieve Topic
+      description: Retrieve one topic.
+      operationId: retrieve-topic
+      tags:
+        - Topics
+      parameters:
+        - name: topicId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/TopicResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      summary: Update Topic
+      description: Rename a topic.
+      operationId: update-topic
+      tags:
+        - Topics
+      parameters:
+        - name: topicId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTopicRequest"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/IdResponse"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /topics/{topicId}/memberships:
+    get:
+      summary: List Topic Memberships
+      description: List a topic's explicit membership records only. A contact without one is subscribed by default.
+      operationId: list-topic-memberships
+      tags:
+        - Topic memberships
+      parameters:
+        - name: topicId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/CursorParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TopicMembershipsResponseItem"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - data
+                additionalProperties: false
+        "500":
+          description: An error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /webhooks:
     post:
       summary: Create Webhook
-      description: Register an endpoint to start receiving webhook events for your organization.
+      description: Registers an HTTPS endpoint to receive the event types you subscribe to. The response includes the signing secret used to verify webhook payloads.
       operationId: create-webhook
       tags:
         - Webhooks
@@ -1784,7 +3373,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: List Webhooks
-      description: Returns all registered webhook endpoints for the organization.
+      description: Lists the webhook endpoints of your organization, newest first, with cursor pagination. Each entry shows its URL, event types, and status.
       operationId: list-webhooks
       tags:
         - Webhooks
@@ -1819,7 +3408,7 @@ paths:
   /webhooks/{id}:
     delete:
       summary: Delete Webhook
-      description: Remove a webhook endpoint. No further events will be delivered to this URL.
+      description: Permanently deletes a webhook endpoint. Events are no longer delivered to its URL after deletion. This cannot be undone.
       operationId: delete-webhook
       tags:
         - Webhooks
@@ -1831,8 +3420,8 @@ paths:
           schema:
             type: string
       responses:
-        "202":
-          description: Request accepted.
+        "200":
+          description: Successful response.
           content:
             application/json:
               schema:
@@ -1851,7 +3440,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: Retrieve Webhook
-      description: Returns a webhook endpoint with its URL, subscribed events, and configuration.
+      description: Retrieves a webhook endpoint with its URL, subscribed event types, status, and the reason and time it was disabled, if it is disabled.
       operationId: retrieve-webhook
       tags:
         - Webhooks
@@ -1883,7 +3472,7 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     patch:
       summary: Update Webhook
-      description: Update the endpoint URL, subscribed event types, or rotate the signing secret.
+      description: Updates the name, URL, event types, or status of a webhook, or rotates its signing secret. The new secret is returned only when you rotate it.
       operationId: update-webhook
       tags:
         - Webhooks
@@ -1921,7 +3510,7 @@ paths:
   /webhooks/{id}/events/{eventId}/deliveries:
     get:
       summary: List Webhook Event Deliveries
-      description: Returns all delivery attempts for a webhook event, including HTTP status codes and response times.
+      description: Lists the delivery attempts of a webhook event to an endpoint, with the status, HTTP response code, response data, and delivery time of each attempt.
       operationId: list-webhook-event-deliveries
       tags:
         - Webhooks Events
@@ -1958,7 +3547,7 @@ paths:
   /webhooks/{id}/events/{eventId}/replay:
     post:
       summary: Replay Webhook Event
-      description: Re-deliver a webhook event to its endpoint. Useful for retrying failed deliveries.
+      description: Queues a new delivery of a past webhook event to the endpoint. The request is accepted asynchronously and returns 202 before the delivery runs.
       operationId: replay-webhook-event
       tags:
         - Webhooks Events
@@ -1984,9 +3573,9 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
   /webhooks/events:
     get:
-      summary: List Webhooks Events
-      description: Returns recent webhook events across all registered endpoints.
-      operationId: list-webhooks-events
+      summary: List Webhook Events
+      description: Lists the webhook events of the last 48 hours across all your endpoints, with their delivery status and payload. Results use cursor pagination.
+      operationId: list-webhook-events
       tags:
         - Webhooks Events
       parameters:
@@ -2021,7 +3610,7 @@ webhooks:
   webhook-endpoint:
     post:
       summary: Webhook Endpoint
-      description: Endpoint your application exposes to receive webhook events from Nuntly. The request body is a single event from the `Event` discriminated union.
+      description: Endpoint your application exposes to receive webhook events from Nuntly. The request body is a single event from the `WebhookEvent` discriminated union, the event types a webhook delivers.
       tags:
         - Webhooks Hook
       operationId: webhook-endpoint
@@ -2033,7 +3622,7 @@ webhooks:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Event"
+              $ref: "#/components/schemas/WebhookEvent"
       responses:
         200:
           description: Webhook received successfully
@@ -2042,7 +3631,7 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: API Key (format apk_...)
+      bearerFormat: API Key (format ntly_...)
       description: Use an API key from https://nuntly.com/api-keys. Required on every endpoint.
   parameters:
     CursorParam:
@@ -2054,7 +3643,7 @@ components:
     LimitParam:
       name: limit
       in: query
-      description: Maximum number of items to return
+      description: The maximum number of results to return, from 1 to 30. Defaults to 30.
       schema:
         type: integer
         minimum: 1
@@ -2066,6 +3655,7 @@ components:
       required:
         - id
         - createdAt
+        - updatedAt
         - agentId
         - inboxId
         - threadId
@@ -2074,13 +3664,19 @@ components:
       properties:
         id:
           description: The agent memory record id.
-          type: string
+          type:
+            - string
+            - "null"
         createdAt:
           description: Date at which the object was created (ISO 8601 format)
-          type: string
+          type:
+            - string
+            - "null"
         updatedAt:
           description: Date at which the object was updated (ISO 8601 format)
-          type: string
+          type:
+            - string
+            - "null"
         agentId:
           description: The agent identifier.
           type: string
@@ -2097,7 +3693,21 @@ components:
         memory:
           description: The agent memory data.
           type: object
-          additionalProperties: true
+          additionalProperties:
+            oneOf:
+              - anyOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
+                  - type: array
+                    items:
+                      oneOf:
+                        - anyOf:
+                            - type: string
+                            - type: number
+                            - type: boolean
+                        - type: "null"
+              - type: "null"
         summary:
           description: The conversation summary.
           type:
@@ -2107,10 +3717,10 @@ components:
       type: object
       properties:
         inboxId:
-          description: Scope memory to a specific inbox.
+          description: The id of an inbox in your organization. Scopes memory to that inbox.
           type: string
         threadId:
-          description: Scope memory to a specific thread.
+          description: The id of a thread in your organization. Scopes memory to that thread.
           type: string
     AgentMemoryRequest:
       type: object
@@ -2118,15 +3728,29 @@ components:
         - memory
       properties:
         inboxId:
-          description: The inbox id to scope the memory to.
+          description: The id of an inbox in your organization. Scopes memory to that inbox.
           type: string
         threadId:
-          description: The thread id to scope the memory to.
+          description: The id of a thread in your organization. Scopes memory to that thread.
           type: string
         memory:
           description: The agent memory key-value data.
           type: object
-          additionalProperties: true
+          additionalProperties:
+            oneOf:
+              - anyOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
+                  - type: array
+                    items:
+                      oneOf:
+                        - anyOf:
+                            - type: string
+                            - type: number
+                            - type: boolean
+                        - type: "null"
+              - type: "null"
         summary:
           description: A human-readable conversation summary.
           type:
@@ -2292,6 +3916,176 @@ components:
           type: string
         remoteMtaIp:
           type: string
+    BroadcastRecipientsResponseItem:
+      type: object
+      required:
+        - id
+        - contactId
+        - email
+        - outcome
+        - createdAt
+      properties:
+        id:
+          description: The id of the recipient record.
+          type: string
+        contactId:
+          description: The source contact, absent once deleted.
+          type:
+            - string
+            - "null"
+        email:
+          description: The recipient address, kept until your retention window ends.
+          type: string
+        outcome:
+          description: The current status of the recipient’s email.
+          $ref: '#/components/schemas/EmailStatus'
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+    BroadcastResponse:
+      type: object
+      required:
+        - id
+        - from
+        - status
+        - statusAt
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the broadcast.
+          type: string
+        name:
+          description: An internal label, shown only to your team.
+          type: string
+        templateId:
+          description: The id of the template.
+          type: string
+        templateVersionId:
+          description: The content version this broadcast sends. Frozen once queued.
+          type: string
+        domainId:
+          description: The id of the sending domain.
+          type: string
+        topicId:
+          description: The topic this broadcast targets.
+          type: string
+        segmentId:
+          description: The segment this broadcast targets.
+          type: string
+        from:
+          type: string
+        subject:
+          description: The subject, falling back to the template version’s subject.
+          type: string
+        replyTo:
+          description: The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+        status:
+          description: The lifecycle state of the broadcast.
+          $ref: '#/components/schemas/BroadcastStatus'
+        statusAt:
+          description: Date at which the broadcast reached its current state.
+          type: string
+        statusReason:
+          description: May provide more information about the status.
+          type: object
+          additionalProperties: true
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        variables:
+          description: The stored variable values.
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+              - type: boolean
+    BroadcastsResponseItem:
+      type: object
+      required:
+        - id
+        - from
+        - status
+        - statusAt
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the broadcast.
+          type: string
+        name:
+          description: An internal label, shown only to your team.
+          type: string
+        templateId:
+          description: The id of the template.
+          type: string
+        templateVersionId:
+          description: The content version this broadcast sends. Frozen once queued.
+          type: string
+        domainId:
+          description: The id of the sending domain.
+          type: string
+        topicId:
+          description: The topic this broadcast targets.
+          type: string
+        segmentId:
+          description: The segment this broadcast targets.
+          type: string
+        from:
+          type: string
+        subject:
+          description: The subject, falling back to the template version’s subject.
+          type: string
+        replyTo:
+          description: The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+        status:
+          description: The lifecycle state of the broadcast.
+          $ref: '#/components/schemas/BroadcastStatus'
+        statusAt:
+          description: Date at which the broadcast reached its current state.
+          type: string
+        statusReason:
+          description: May provide more information about the status.
+          type: object
+          additionalProperties: true
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        variables:
+          description: The stored variable values.
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+              - type: boolean
+    BroadcastStatus:
+      type: string
+      enum:
+        - draft
+        - scheduled
+        - queued
+        - sending
+        - sent
+        - paused
+        - failed
     BulkEmailsResponse:
       type: object
       required:
@@ -2309,8 +4103,10 @@ components:
               - status
             properties:
               id:
+                description: The id of the email
                 type: string
               status:
+                description: The status of the email.
                 $ref: '#/components/schemas/EmailStatus'
               detail:
                 type: string
@@ -2329,7 +4125,10 @@ components:
           type: string
         linkTags:
           type: object
-          additionalProperties: true
+          additionalProperties:
+            type: array
+            items:
+              type: string
         isBotEvent:
           type: string
           enum:
@@ -2371,10 +4170,200 @@ components:
           type: string
         receivedAt:
           type: string
-    CreateApiKeyRequest:
+    ContactPropertiesResponseItem:
       type: object
       required:
-        - permission
+        - id
+        - name
+        - type
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the contact property.
+          type: string
+        name:
+          description: A name for the property, used as its key in a contact's properties. Stored trimmed, with the letter case it was typed with.
+          type: string
+        type:
+          description: The declared type of the property. Immutable after creation.
+          type: string
+          enum:
+            - string
+            - number
+        description:
+          description: An optional description of the property.
+          type:
+            - string
+            - "null"
+        defaultValue:
+          anyOf:
+            - type: string
+            - type: number
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+    ContactPropertyResponse:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the contact property.
+          type: string
+        name:
+          description: A name for the property, used as its key in a contact's properties. Stored trimmed, with the letter case it was typed with.
+          type: string
+        type:
+          description: The declared type of the property. Immutable after creation.
+          type: string
+          enum:
+            - string
+            - number
+        description:
+          description: An optional description of the property.
+          type:
+            - string
+            - "null"
+        defaultValue:
+          anyOf:
+            - type: string
+            - type: number
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+    ContactResponse:
+      type: object
+      required:
+        - id
+        - email
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the contact.
+          type: string
+        email:
+          description: The contact email address. Stored lowercased and trimmed.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        properties:
+          description: The contact's properties, keyed by property name.
+          type: object
+          additionalProperties:
+            oneOf:
+              - anyOf:
+                  - type: string
+                  - type: number
+              - type: "null"
+    ContactSegmentMembershipIdResponse:
+      type: object
+      required:
+        - id
+        - segmentId
+      properties:
+        id:
+          description: The id of the contact removed from the segment.
+          type: string
+        segmentId:
+          description: The id of the segment the contact was removed from. The segment itself is not deleted.
+          type: string
+    ContactSegmentMembershipResponse:
+      type: object
+      required:
+        - contactId
+        - segmentId
+        - createdAt
+      properties:
+        contactId:
+          description: The id of the contact.
+          type: string
+        segmentId:
+          description: The id of the segment.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+    ContactSegmentsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/ContactSegmentsResponseItem"
+    ContactSegmentsResponseItem:
+      type: object
+      required:
+        - segmentId
+        - createdAt
+      properties:
+        segmentId:
+          description: The id of the segment.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+    ContactsResponseItem:
+      type: object
+      required:
+        - id
+        - email
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the contact.
+          type: string
+        email:
+          description: The contact email address. Stored lowercased and trimmed.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+    ContactTopicMembershipsResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/ContactTopicMembershipsResponseItem"
+    ContactTopicMembershipsResponseItem:
+      type: object
+      required:
+        - topicId
+        - state
+        - source
+      properties:
+        topicId:
+          description: The id of the topic.
+          type: string
+        state:
+          description: The subscribe/unsubscribe state.
+          type: string
+          enum:
+            - subscribed
+            - unsubscribed
+        source:
+          description: "How this state was derived: an explicit membership record, the organization default (subscribed, when no record exists), or a platform-wide opt-out, which overrides every other source."
+          type: string
+          enum:
+            - explicit
+            - default
+            - platform_opt_out
+    CreateApiKeyRequest:
+      type: object
       properties:
         name:
           description: The name of the api key
@@ -2424,6 +4413,44 @@ components:
             - enabled
             - disabled
             - revoked
+    CreateBroadcastRequest:
+      type: object
+      required:
+        - from
+      properties:
+        templateId:
+          description: The template to send.
+          type: string
+        from:
+          description: The sender address, on a verified domain.
+          type: string
+        name:
+          description: An internal label, shown only to your team.
+          type: string
+        subject:
+          description: The subject. Defaults to the template version’s subject.
+          type: string
+        replyTo:
+          description: The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address
+          anyOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+        topicId:
+          description: The topic to send to.
+          type: string
+        segmentId:
+          description: The segment to send to.
+          type: string
+        variables:
+          description: Variable values keyed by declared name.
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+              - type: boolean
     CreateBulkEmail:
       type: object
       properties:
@@ -2470,7 +4497,8 @@ components:
         headers:
           description: The headers to add to the email
           type: object
-          additionalProperties: true
+          additionalProperties:
+            type: string
         tags:
           description: The tags to add to the email
           type: array
@@ -2479,7 +4507,13 @@ components:
         variables:
           description: The variables for the template
           type: object
-          additionalProperties: true
+          additionalProperties:
+            oneOf:
+              - anyOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
+              - type: "null"
     CreateBulkEmails:
       type: array
       items:
@@ -2513,8 +4547,10 @@ components:
               - status
             properties:
               id:
+                description: The id of the email
                 type: string
               status:
+                description: The status of the email.
                 $ref: '#/components/schemas/EmailStatus'
     CreateBulkFallback:
       type: object
@@ -2562,7 +4598,8 @@ components:
         headers:
           description: The headers to add to the email
           type: object
-          additionalProperties: true
+          additionalProperties:
+            type: string
         tags:
           description: The tags to add to the email
           type: array
@@ -2571,7 +4608,57 @@ components:
         variables:
           description: The variables for the template
           type: object
-          additionalProperties: true
+          additionalProperties:
+            oneOf:
+              - anyOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
+              - type: "null"
+    CreateContactPropertyRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          description: A name for the property, used as its key in a contact's properties. Stored trimmed, with the letter case it was typed with.
+          type: string
+        type:
+          description: The declared type of the property. Immutable after creation.
+          type: string
+          enum:
+            - string
+            - number
+        description:
+          description: An optional description of the property.
+          type:
+            - string
+            - "null"
+        defaultValue:
+          description: Applied to new contacts that omit this property.
+          oneOf:
+            - anyOf:
+                - type: string
+                - type: number
+            - type: "null"
+    CreateContactRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          description: The contact email address. Stored lowercased and trimmed.
+          type: string
+        properties:
+          description: Contact properties keyed by name. A null value means not supplied.
+          type: object
+          additionalProperties:
+            oneOf:
+              - anyOf:
+                  - type: string
+                  - type: number
+              - type: "null"
     CreateDomainRequest:
       type: object
       required:
@@ -2636,7 +4723,8 @@ components:
         headers:
           description: The headers to add to the email
           type: object
-          additionalProperties: true
+          additionalProperties:
+            type: string
         tags:
           description: The tags to add to the email
           type: array
@@ -2650,7 +4738,13 @@ components:
         variables:
           description: The variables for the template
           type: object
-          additionalProperties: true
+          additionalProperties:
+            oneOf:
+              - anyOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
+              - type: "null"
         scheduledAt:
           description: The date at which the email is scheduled to be sent
           type: string
@@ -2697,6 +4791,48 @@ components:
         externalId:
           description: An optional external identifier for the namespace.
           type: string
+    CreateSegmentRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: A name for the segment, shown to your team. Stored lowercased and trimmed.
+          type: string
+    CreateTemplateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: A name for the template, shown only to your team.
+          type: string
+    CreateTemplateVersionRequest:
+      type: object
+      required:
+        - subject
+        - html
+      properties:
+        subject:
+          type: string
+        html:
+          type: string
+        text:
+          description: The plain-text body.
+          type: string
+        variables:
+          description: Variables the content may reference, at most 20. Immutable once created.
+          type: array
+          items:
+            $ref: '#/components/schemas/VariableDeclaration'
+    CreateTopicRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: A name for the topic, shown to your team. Stored lowercased and trimmed.
+          type: string
     CreateWebhookRequest:
       type: object
       required:
@@ -2719,7 +4855,7 @@ components:
           description: The event types to subscribe to
           type: array
           items:
-            $ref: '#/components/schemas/EventType'
+            $ref: '#/components/schemas/WebhookEventType'
     CreateWebhookResponse:
       type: object
       required:
@@ -2927,11 +5063,7 @@ components:
           type: boolean
         sendingStatus:
           description: The sending status for the domain
-          type: string
-          enum:
-            - enabled
-            - disabled
-            - paused
+          $ref: '#/components/schemas/DomainSendingStatus'
         sendingStatusAt:
           description: The date of the latest sending status change
           type: string
@@ -2963,18 +5095,23 @@ components:
               - statusAt
             properties:
               name:
+                description: The name of the record.
                 type: string
               fullname:
+                description: The FQDN of the domain record
                 type: string
               recordType:
+                description: "The type of the record: \"TXT\", \"MX\" or \"CNAME\""
                 type: string
                 enum:
                   - TXT
                   - MX
                   - CNAME
               ttl:
+                description: TTL (Time To Live) for this DNS record specifies the duration (in seconds)
                 type: string
               group:
+                description: "The group of group: \"DKIM\", \"SPF\", \"MX\" or \"DMARC\". It is useful to group the records"
                 type: string
                 enum:
                   - DKIM
@@ -2983,15 +5120,26 @@ components:
                   - DMARC
                   - MX_RECEIVING
               selector:
+                description: A unique identifier in DKIM record to create CNAME records for verifying domain ownership and enabling email authentication
                 type: string
               priority:
+                description: Priority in a DNS record, typically used in MX (Mail Exchange) records, specifies the order in which mail servers should be used, with lower values indicating higher priority for email delivery
                 type: string
               value:
+                description: The value of a DNS record is the data that the record points to
                 type: string
               status:
+                description: The status of the record
                 $ref: '#/components/schemas/DomainStatus'
               statusAt:
+                description: The date of the lastest verification of this record
                 type: string
+    DomainSendingStatus:
+      type: string
+      enum:
+        - enabled
+        - disabled
+        - paused
     DomainsResponseItem:
       type: object
       required:
@@ -3014,11 +5162,7 @@ components:
           $ref: '#/components/schemas/DomainStatus'
         sendingStatus:
           description: The sending status for the domain
-          type: string
-          enum:
-            - enabled
-            - disabled
-            - paused
+          $ref: '#/components/schemas/DomainSendingStatus'
         receivingStatus:
           description: The receiving status for the domain
           $ref: '#/components/schemas/DomainReceivingStatus'
@@ -3246,6 +5390,8 @@ components:
           type: string
         bulkId:
           type: string
+        broadcastId:
+          type: string
         messageId:
           type: string
         sentAt:
@@ -3298,7 +5444,10 @@ components:
                 type: string
         tags:
           type: object
-          additionalProperties: true
+          additionalProperties:
+            type: array
+            items:
+              type: string
     EmailEventsResponse:
       type: array
       items:
@@ -3463,6 +5612,8 @@ components:
               type: string
             bulkId:
               type: string
+            broadcastId:
+              type: string
             messageId:
               type: string
             sentAt:
@@ -3515,7 +5666,10 @@ components:
                     type: string
             tags:
               type: object
-              additionalProperties: true
+              additionalProperties:
+                type: array
+                items:
+                  type: string
             reject:
               $ref: '#/components/schemas/RejectDetail'
     EmailResponse:
@@ -3585,7 +5739,8 @@ components:
         headers:
           description: The headers to add to the email
           type: object
-          additionalProperties: true
+          additionalProperties:
+            type: string
         tags:
           description: The tags to add to the email
           type: array
@@ -3598,15 +5753,24 @@ components:
             type: object
             properties:
               filename:
+                description: The name of the attached file to be displayed to the recipient
                 type: string
               contentType:
+                description: Content type of the attachment (the MIME type)
                 type: string
               size:
+                description: The size of the attachment in bytes
                 type: number
         variables:
           description: The variables for the template
           type: object
-          additionalProperties: true
+          additionalProperties:
+            oneOf:
+              - anyOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
+              - type: "null"
         scheduledAt:
           description: The date at which the email is scheduled to be sent
           type: string
@@ -3769,40 +5933,58 @@ components:
               - uniqueClicked
             properties:
               occurredOn:
+                description: The date of the stats
                 type: string
               queued:
+                description: Number of emails queued
                 type: number
               scheduled:
+                description: Number of emails scheduled
                 type: number
               processed:
+                description: Number of emails processed
                 type: number
               sending:
+                description: Number of emails sending
                 type: number
               sent:
+                description: Number of emails sent
                 type: number
               delivered:
+                description: Number of emails delivered
                 type: number
               deliveryDelayed:
+                description: Number of emails whose delivery was delayed
                 type: number
               bounced:
+                description: Number of emails bounced
                 type: number
               failed:
+                description: Number of emails failed
                 type: number
               rejected:
+                description: Number of emails rejected
                 type: number
               canceled:
+                description: Number of emails canceled
                 type: number
               complaintReceived:
+                description: Number of complaint received
                 type: number
               renderingFailed:
+                description: Number of emails with rendering failed
                 type: number
               opened:
+                description: Number of emails opened
                 type: number
               uniqueOpened:
+                description: Number of unique emails opened
                 type: number
               clicked:
+                description: Number of emails clicked
                 type: number
               uniqueClicked:
+                description: Number of unique emails clicked
                 type: number
     EmailStatus:
       type: string
@@ -3977,7 +6159,7 @@ components:
           description: The cursor to retrieve the next page of results
           type: string
         limit:
-          description: The maximum number of results to return
+          description: The maximum number of results to return, from 1 to 30. Defaults to 30.
           type: number
         namespaceId:
           description: Filter by namespace.
@@ -4313,7 +6495,8 @@ components:
           description: The raw email headers.
           oneOf:
             - type: object
-              additionalProperties: true
+              additionalProperties:
+                type: string
             - type: "null"
     MessageSecurityFlaggedEvent:
       title: message.security.flagged
@@ -4360,7 +6543,7 @@ components:
           description: The cursor to retrieve the next page of results
           type: string
         limit:
-          description: The maximum number of results to return
+          description: The maximum number of results to return, from 1 to 30. Defaults to 30.
           type: number
         domainId:
           description: Filter by domain.
@@ -4495,7 +6678,7 @@ components:
           description: The cursor to retrieve the next page of results
           type: string
         limit:
-          description: The maximum number of results to return
+          description: The maximum number of results to return, from 1 to 30. Defaults to 30.
           type: number
     NamespaceResponse:
       type: object
@@ -4529,7 +6712,7 @@ components:
           description: The cursor to retrieve the next page of results
           type: string
         limit:
-          description: The maximum number of results to return
+          description: The maximum number of results to return, from 1 to 30. Defaults to 30.
           type: number
     NamespacesResponseItem:
       type: object
@@ -4612,56 +6795,108 @@ components:
     OrganizationUsageResponse:
       type: object
       required:
-        - transactional
+        - email
       properties:
-        transactional:
+        email:
           type: object
           required:
-            - limits
-            - usage
-            - sending
-            - receiving
+            - daily
+            - monthly
           properties:
-            limits:
+            daily:
               type: object
               required:
-                - daily
-                - monthly
+                - used
+                - limit
+                - breakdown
+                - resetsAt
               properties:
-                daily:
+                used:
+                  description: "Emails counted against the limit in this window: the sum of breakdown."
                   type: number
-                monthly:
-                  type: number
-            usage:
+                limit:
+                  description: Maximum emails for this window after any per-organization adjustment. null means the window is unlimited. 0 means every transactional send is refused.
+                  type:
+                    - number
+                    - "null"
+                breakdown:
+                  description: Emails counted in this window, per channel. used is the sum of all its values.
+                  type: object
+                  required:
+                    - transactional
+                    - broadcast
+                  properties:
+                    transactional:
+                      type: object
+                      required:
+                        - sent
+                        - received
+                      properties:
+                        sent:
+                          description: Transactional emails sent
+                          type: number
+                        received:
+                          description: Emails received
+                          type: number
+                    broadcast:
+                      type: object
+                      required:
+                        - sent
+                      properties:
+                        sent:
+                          description: Broadcast emails sent
+                          type: number
+                resetsAt:
+                  description: When the daily window resets (next midnight UTC).
+                  type: string
+            monthly:
               type: object
               required:
-                - daily
-                - monthly
+                - used
+                - limit
+                - breakdown
+                - resetsAt
               properties:
-                daily:
+                used:
+                  description: "Emails counted against the limit in this window: the sum of breakdown."
                   type: number
-                monthly:
-                  type: number
-            sending:
-              type: object
-              required:
-                - daily
-                - monthly
-              properties:
-                daily:
-                  type: number
-                monthly:
-                  type: number
-            receiving:
-              type: object
-              required:
-                - daily
-                - monthly
-              properties:
-                daily:
-                  type: number
-                monthly:
-                  type: number
+                limit:
+                  description: Maximum emails for this window after any per-organization adjustment. null means the window is unlimited. 0 means every transactional send is refused.
+                  type:
+                    - number
+                    - "null"
+                breakdown:
+                  description: Emails counted in this window, per channel. used is the sum of all its values.
+                  type: object
+                  required:
+                    - transactional
+                    - broadcast
+                  properties:
+                    transactional:
+                      type: object
+                      required:
+                        - sent
+                        - received
+                      properties:
+                        sent:
+                          description: Transactional emails sent
+                          type: number
+                        received:
+                          description: Emails received
+                          type: number
+                    broadcast:
+                      type: object
+                      required:
+                        - sent
+                      properties:
+                        sent:
+                          description: Broadcast emails sent
+                          type: number
+                resetsAt:
+                  description: When the monthly window resets (end of the billing period). null when the subscription records no period end.
+                  type:
+                    - string
+                    - "null"
     RejectDetail:
       type: object
       required:
@@ -4671,8 +6906,6 @@ components:
           type: string
     ReplyMessageRequest:
       type: object
-      required:
-        - replyAll
       properties:
         text:
           description: The plain text body.
@@ -4687,8 +6920,81 @@ components:
       type: object
       properties:
         markRead:
-          description: "Set to \"true\" to automatically remove the unread label from all messages in the thread."
+          description: When true, removes the unread label from all messages in the thread.
           type: string
+          enum:
+            - "true"
+            - "false"
+    SegmentMembersResponseItem:
+      type: object
+      required:
+        - contactId
+        - createdAt
+      properties:
+        contactId:
+          description: The id of the contact.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+    SegmentResponse:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the segment.
+          type: string
+        name:
+          description: A name for the segment, shown to your team. Stored lowercased and trimmed.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+    SegmentsResponseItem:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the segment.
+          type: string
+        name:
+          description: A name for the segment, shown to your team. Stored lowercased and trimmed.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+    SendBroadcastRequest:
+      type: object
+      properties:
+        scheduledAt:
+          description: When to send. Omit to send immediately.
+          type: string
+    SendBroadcastResponse:
+      type: object
+      required:
+        - id
+        - status
+      properties:
+        id:
+          description: The id of the broadcast.
+          type: string
+        status:
+          description: The lifecycle state of the broadcast.
+          $ref: '#/components/schemas/BroadcastStatus'
     SendMessageRequest:
       type: object
       required:
@@ -4739,6 +7045,40 @@ components:
         subject:
           description: The subject of the message.
           type: string
+    SetContactTopicMembershipRequest:
+      type: object
+      required:
+        - state
+      properties:
+        state:
+          description: The subscribe/unsubscribe state.
+          type: string
+          enum:
+            - subscribed
+            - unsubscribed
+    SetContactTopicMembershipResponse:
+      type: object
+      required:
+        - contactId
+        - topicId
+        - state
+        - updatedAt
+      properties:
+        contactId:
+          description: The id of the contact.
+          type: string
+        topicId:
+          description: The id of the topic.
+          type: string
+        state:
+          description: The subscribe/unsubscribe state.
+          type: string
+          enum:
+            - subscribed
+            - unsubscribed
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
     Tag:
       type: object
       required:
@@ -4751,6 +7091,222 @@ components:
         value:
           description: The tag to add to the email
           type: string
+    TemplateResponse:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the template.
+          type: string
+        name:
+          description: A name for the template, shown only to your team.
+          type: string
+        status:
+          description: The lifecycle state of the template.
+          type: string
+          enum:
+            - draft
+            - published
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+    TemplatesResponseItem:
+      type: object
+      required:
+        - id
+        - name
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the template.
+          type: string
+        name:
+          description: A name for the template, shown only to your team.
+          type: string
+        status:
+          description: The lifecycle state of the template.
+          type: string
+          enum:
+            - draft
+            - published
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+    TemplateVersionContentResponse:
+      type: object
+      required:
+        - html
+        - text
+      properties:
+        html:
+          anyOf:
+            - type: object
+              required:
+                - status
+                - downloadUrl
+                - expiresAt
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - available
+                downloadUrl:
+                  description: Presigned download URL.
+                  type: string
+                expiresAt:
+                  description: When the URL expires.
+                  type: string
+            - type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - absent
+            - type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - unavailable
+        text:
+          anyOf:
+            - type: object
+              required:
+                - status
+                - downloadUrl
+                - expiresAt
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - available
+                downloadUrl:
+                  description: Presigned download URL.
+                  type: string
+                expiresAt:
+                  description: When the URL expires.
+                  type: string
+            - type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - absent
+            - type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - unavailable
+    TemplateVersionIdResponse:
+      type: object
+      required:
+        - id
+        - templateVersionId
+      properties:
+        id:
+          description: The id of the template.
+          type: string
+        templateVersionId:
+          description: The id of the version that was published.
+          type: string
+    TemplateVersionResponse:
+      type: object
+      required:
+        - id
+        - templateId
+        - status
+        - subject
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the content version.
+          type: string
+        templateId:
+          description: The id of the template.
+          type: string
+        status:
+          description: The lifecycle state of the content version.
+          type: string
+          enum:
+            - draft
+            - active
+        subject:
+          type: string
+        publishedAt:
+          description: Date at which this version was published.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        variables:
+          description: The declared variables.
+          type: array
+          items:
+            $ref: '#/components/schemas/VariableDeclaration'
+    TemplateVersionsResponseItem:
+      type: object
+      required:
+        - id
+        - templateId
+        - status
+        - subject
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the content version.
+          type: string
+        templateId:
+          description: The id of the template.
+          type: string
+        status:
+          description: The lifecycle state of the content version.
+          type: string
+          enum:
+            - draft
+            - active
+        subject:
+          type: string
+        publishedAt:
+          description: Date at which this version was published.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+        variables:
+          description: The declared variables.
+          type: array
+          items:
+            $ref: '#/components/schemas/VariableDeclaration'
     ThreadMessagesResponseItem:
       type: object
       required:
@@ -4892,7 +7448,7 @@ components:
           description: The cursor to retrieve the next page of results
           type: string
         limit:
-          description: The maximum number of results to return
+          description: The maximum number of results to return, from 1 to 30. Defaults to 30.
           type: number
         labels:
           description: Comma-separated labels to filter by (AND logic). Threads with spam/trash are excluded by default unless explicitly requested via ?labels=spam or ?labels=trash.
@@ -4950,6 +7506,69 @@ components:
           type:
             - string
             - "null"
+    TopicMembershipsResponseItem:
+      type: object
+      required:
+        - contactId
+        - state
+        - createdAt
+        - updatedAt
+      properties:
+        contactId:
+          description: The id of the contact.
+          type: string
+        state:
+          description: The subscribe/unsubscribe state.
+          type: string
+          enum:
+            - subscribed
+            - unsubscribed
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+    TopicResponse:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the topic.
+          type: string
+        name:
+          description: A name for the topic, shown to your team. Stored lowercased and trimmed.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
+    TopicsResponseItem:
+      type: object
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          description: The id of the topic.
+          type: string
+        name:
+          description: A name for the topic, shown to your team. Stored lowercased and trimmed.
+          type: string
+        createdAt:
+          description: Date at which the object was created (ISO 8601 format)
+          type: string
+        updatedAt:
+          description: Date at which the object was updated (ISO 8601 format)
+          type: string
     UpdateApiKeyRequest:
       type: object
       properties:
@@ -4980,6 +7599,86 @@ components:
         id:
           description: The id of the api key
           type: string
+    UpdateBroadcastRequest:
+      type: object
+      properties:
+        templateId:
+          description: Set to null to detach the template.
+          type:
+            - string
+            - "null"
+        from:
+          description: The sender address, on a verified domain.
+          type: string
+        name:
+          description: Set to null to remove the name.
+          type:
+            - string
+            - "null"
+        subject:
+          description: Set to null to fall back to the template version’s subject.
+          type:
+            - string
+            - "null"
+        replyTo:
+          description: The email address where replies should be sent. If a recipient replies, the response will go to this address instead of the sender's email address
+          oneOf:
+            - anyOf:
+                - type: array
+                  items:
+                    type: string
+                - type: string
+            - type: "null"
+        topicId:
+          description: Set to null to remove the topic.
+          type:
+            - string
+            - "null"
+        segmentId:
+          description: Set to null to remove the segment.
+          type:
+            - string
+            - "null"
+        variables:
+          description: Replaces the stored values. Send {} to clear them.
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+              - type: boolean
+        status:
+          description: Only draft is accepted.
+          $ref: '#/components/schemas/BroadcastStatus'
+    UpdateContactPropertyRequest:
+      type: object
+      properties:
+        description:
+          description: An optional description of the property.
+          type:
+            - string
+            - "null"
+        defaultValue:
+          oneOf:
+            - anyOf:
+                - type: string
+                - type: number
+            - type: "null"
+    UpdateContactRequest:
+      type: object
+      properties:
+        email:
+          description: "The contact's current address, in any letter case. The address cannot be changed: a different address is refused with the error code contact_email_immutable."
+          type: string
+        properties:
+          description: Contact properties keyed by name, matched exactly. A null value removes the property.
+          type: object
+          additionalProperties:
+            oneOf:
+              - anyOf:
+                  - type: string
+                  - type: number
+              - type: "null"
     UpdateDomainRequest:
       type: object
       properties:
@@ -5043,6 +7742,20 @@ components:
           type:
             - string
             - "null"
+    UpdateSegmentRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: A name for the segment, shown to your team. Stored lowercased and trimmed.
+          type: string
+    UpdateTemplateRequest:
+      type: object
+      properties:
+        name:
+          description: A name for the template, shown only to your team.
+          type: string
     UpdateThreadRequest:
       type: object
       properties:
@@ -5061,6 +7774,14 @@ components:
           type:
             - string
             - "null"
+    UpdateTopicRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: A name for the topic, shown to your team. Stored lowercased and trimmed.
+          type: string
     UpdateWebhookRequest:
       type: object
       properties:
@@ -5074,7 +7795,7 @@ components:
           description: The event types to subscribe to
           type: array
           items:
-            $ref: '#/components/schemas/EventType'
+            $ref: '#/components/schemas/WebhookEventType'
         status:
           description: The status of the webhook.
           type: string
@@ -5095,6 +7816,62 @@ components:
         signingSecret:
           description: The signing secret of the webhook.
           type: string
+    VariableDeclaration:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          description: The variable name, case-sensitive.
+          type: string
+        type:
+          description: The variable type.
+          type: string
+          enum:
+            - string
+            - number
+            - boolean
+        default:
+          description: Used when a broadcast sets no value.
+          anyOf:
+            - type: string
+            - type: number
+            - type: boolean
+    WebhookEvent:
+      description: The events a webhook can deliver. A webhook receives only the types it subscribes to.
+      oneOf:
+        - $ref: "#/components/schemas/EmailSentEvent"
+        - $ref: "#/components/schemas/EmailDeliveredEvent"
+        - $ref: "#/components/schemas/EmailOpenedEvent"
+        - $ref: "#/components/schemas/EmailClickedEvent"
+        - $ref: "#/components/schemas/EmailBouncedEvent"
+        - $ref: "#/components/schemas/EmailComplainedEvent"
+        - $ref: "#/components/schemas/EmailRejectedEvent"
+        - $ref: "#/components/schemas/EmailDeliveryDelayedEvent"
+        - $ref: "#/components/schemas/EmailFailedEvent"
+        - $ref: "#/components/schemas/MessageReceivedEvent"
+        - $ref: "#/components/schemas/MessageSecurityFlaggedEvent"
+        - $ref: "#/components/schemas/MessageAgentTriggeredEvent"
+        - $ref: "#/components/schemas/MessageSentEvent"
+        - $ref: "#/components/schemas/MessageRejectedEvent"
+      discriminator:
+        propertyName: type
+        mapping:
+          "email.bounced": "#/components/schemas/EmailBouncedEvent"
+          "email.clicked": "#/components/schemas/EmailClickedEvent"
+          "email.complained": "#/components/schemas/EmailComplainedEvent"
+          "email.delivered": "#/components/schemas/EmailDeliveredEvent"
+          "email.deliveryDelayed": "#/components/schemas/EmailDeliveryDelayedEvent"
+          "email.failed": "#/components/schemas/EmailFailedEvent"
+          "email.opened": "#/components/schemas/EmailOpenedEvent"
+          "email.rejected": "#/components/schemas/EmailRejectedEvent"
+          "email.sent": "#/components/schemas/EmailSentEvent"
+          "message.agent.triggered": "#/components/schemas/MessageAgentTriggeredEvent"
+          "message.received": "#/components/schemas/MessageReceivedEvent"
+          "message.rejected": "#/components/schemas/MessageRejectedEvent"
+          "message.security.flagged": "#/components/schemas/MessageSecurityFlaggedEvent"
+          "message.sent": "#/components/schemas/MessageSentEvent"
     WebhookEventDeliveriesResponse:
       type: array
       items:
@@ -5158,6 +7935,23 @@ components:
             - success
             - pending
             - failed
+    WebhookEventType:
+      type: string
+      enum:
+        - email.sent
+        - email.delivered
+        - email.opened
+        - email.clicked
+        - email.bounced
+        - email.complained
+        - email.rejected
+        - email.deliveryDelayed
+        - email.failed
+        - message.received
+        - message.security.flagged
+        - message.agent.triggered
+        - message.sent
+        - message.rejected
     WebhookResponse:
       type: object
       required:
